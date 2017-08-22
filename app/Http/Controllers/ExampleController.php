@@ -23,18 +23,15 @@ class ExampleController extends ApiController
         return $this->respondCreated(app()->environment());
     }
 
-    public function hello(Request $request)
+    public function hello (Request $request)
     {
         $conversationId = $request->input('conversation_id');
         $this->mainframeClient->sendMessage($conversationId, 'Hello World!!');
         return $this->respond(["success" => true]);
     }
 
-    public function bye(Request $request)
+    public function bye()
     {
-        $conversationId = $request->input('conversation_id');
-
-        $this->mainframeClient->sendMessage($conversationId, 'Bye!');
         return $this->respond(["success" => true]);
     }
 }
