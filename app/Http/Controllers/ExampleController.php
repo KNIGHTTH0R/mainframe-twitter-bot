@@ -26,10 +26,7 @@ class ExampleController extends ApiController
     {
         $conversationId = $request->input('conversation_id');
         $mainframeClient = new Mainframe(env('BOT_SECRET'));
-        $mainframeClient->sendMessage($conversationId, 'Hello World!');
-        return config('app.bot_key');/*$this->respond([
-            'conversation_id' => $conversationId,
-            'message' => 'Hello World!'
-        ]);*/
+        $mainframeClient->sendMessage($conversationId, 'Hello World!!');
+        return $this->respond(["success" => true]);
     }
 }
