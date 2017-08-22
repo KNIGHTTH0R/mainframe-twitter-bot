@@ -13,12 +13,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/aubruz/mainframe-bot-api.git",
-                "reference": "0019a37e00006eb713f2e0c7e3e2e6f96d1779cd"
+                "reference": "0586df01baf54d8fd81ce066735e44d9e7e38c79"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/aubruz/mainframe-bot-api/zipball/0019a37e00006eb713f2e0c7e3e2e6f96d1779cd",
-                "reference": "0019a37e00006eb713f2e0c7e3e2e6f96d1779cd",
+                "url": "https://api.github.com/repos/aubruz/mainframe-bot-api/zipball/0586df01baf54d8fd81ce066735e44d9e7e38c79",
+                "reference": "0586df01baf54d8fd81ce066735e44d9e7e38c79",
                 "shasum": ""
             },
             "require": {
@@ -48,7 +48,7 @@
                 "bot",
                 "mainframe"
             ],
-            "time": "2017-08-22 13:05:02"
+            "time": "2017-08-22 13:48:40"
         },
         {
             "name": "doctrine/inflector",

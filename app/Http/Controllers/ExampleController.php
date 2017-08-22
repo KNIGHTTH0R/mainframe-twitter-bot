@@ -25,11 +25,11 @@ class ExampleController extends ApiController
     public function hello(Request $request)
     {
         $conversationId = $request->input('conversation_id');
-        $mainframeClient = new Mainframe(config('app.bot_key'));
+        $mainframeClient = new Mainframe(env('BOT_SECRET'));
         $mainframeClient->sendMessage($conversationId, 'Hello World!');
-        return $this->respond([
+        return config('app.bot_key');/*$this->respond([
             'conversation_id' => $conversationId,
             'message' => 'Hello World!'
-        ]);
+        ]);*/
     }
 }
