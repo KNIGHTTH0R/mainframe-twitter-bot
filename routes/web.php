@@ -12,6 +12,7 @@
 */
 
 $app->get('/', 'ExampleController@index');
+$app->post('/conversation_added', 'ExampleController@hello');
     /*function () use ($app) {
     return $app->version();
 });*/

@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use Aubruz\Mainframe\Mainframe;
+use Illuminate\Http\Request;
 
 class ExampleController extends ApiController
 {
@@ -18,5 +20,16 @@ class ExampleController extends ApiController
     public function index()
     {
         return $this->respondCreated(app()->environment());
+    }
+
+    public function hello(Request $request)
+    {
+        $conversationId = $request->input('conversation_id');
+        $mainframeClient = new Mainframe(config('app.bot_key'));
+        $mainframeClient->sendMessage('Hello World!');
+        return $this->respond([
+            'conversation_id' => $conversationId,
+            'message' => 'Hello World!'
+        ]);
     }
 }
