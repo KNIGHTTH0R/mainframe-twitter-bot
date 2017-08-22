@@ -13,6 +13,5 @@
 
 $app->get('/', 'ExampleController@index');
 $app->post('/conversation_added', 'ExampleController@hello');
-    /*function () use ($app) {
-    return $app->version();
-});*/
+$app->post('/conversation_removed', 'ExampleController@bye');
+

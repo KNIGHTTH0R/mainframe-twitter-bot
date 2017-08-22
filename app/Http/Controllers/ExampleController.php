@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 
 class ExampleController extends ApiController
 {
+    private $mainframeClient;
     /**
      * Create a new controller instance.
      *
@@ -14,7 +15,7 @@ class ExampleController extends ApiController
      */
     public function __construct()
     {
-        //
+        $this->mainframeClient = new Mainframe(env('BOT_SECRET'));
     }
 
     public function index()
@@ -25,8 +26,15 @@ class ExampleController extends ApiController
     public function hello(Request $request)
     {
         $conversationId = $request->input('conversation_id');
-        $mainframeClient = new Mainframe(env('BOT_SECRET'));
-        $mainframeClient->sendMessage($conversationId, 'Hello World!!');
+        $this->mainframeClient->sendMessage($conversationId, 'Hello World!!');
+        return $this->respond(["success" => true]);
+    }
+
+    public function bye(Request $request)
+    {
+        $conversationId = $request->input('conversation_id');
+
+        $this->mainframeClient->sendMessage($conversationId, 'Bye!');
         return $this->respond(["success" => true]);
     }
 }
