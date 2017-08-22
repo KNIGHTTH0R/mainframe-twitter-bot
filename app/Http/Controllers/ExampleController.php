@@ -17,6 +17,6 @@ class ExampleController extends ApiController
 
     public function index()
     {
-        return $this->respondCreated('OK');
+        return $this->respondCreated(app()->environment());
     }
 }
