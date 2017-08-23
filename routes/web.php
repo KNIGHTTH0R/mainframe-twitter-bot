@@ -15,4 +15,5 @@ $app->get('/', 'BotController@index');
 $app->post('/conversation_added', 'BotController@hello');
 $app->post('/conversation_removed', 'BotController@bye');
 $app->post('/post', 'BotController@post');
+$app->post('/delete_subscription', 'BotController@deleteSubscription');
 

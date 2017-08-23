@@ -42,6 +42,11 @@ class BotController extends ApiController
         return $this->respond(["success" => true]);
     }
 
+    public function deleteSubscription()
+    {
+        return $this->respond(['success'   => true]);
+    }
+
     public function post(Request $request)
     {
         if(!$request->has('context.user_id') || !$request->has('context.conversation_id') || !$request->has('context.subscription_token')) {
@@ -51,7 +56,9 @@ class BotController extends ApiController
         $requestType = $request->input('data.type');
 
         switch($requestType){
-            case 'login':
+            case 'save':
+                //Verification of inputs
+                $this->mainframeClient->setupSubscription($request->input('context.subscription_token'), "Subscription label");
                 break;
         }
 
@@ -61,10 +68,10 @@ class BotController extends ApiController
             'message'   => 'Signin with your twitter account to get direct messages and/or tweets that mention your name.',
             'data'      =>
                 (new Modal('Choose you subscription'))
-                    ->addButton(new Button("Save", "save"))
-                    ->addButton(new Button("Signin with Twitter", "signin", "secondary"))
+                    ->addButton(new Button("Save", "save", "primary" , "form_post"))
+                    ->addButton(new Button("Signin with Twitter", "signin", "secondary", "open_url"))
                     ->setRender(
-                        (new Form())
+                        (new Form('myForm'))
                         ->addTextInput("hashtags", "Enter the hashtags that you want to follow.", "#")
                         ->addTextInput("people", "Enter the people that you want to follow.", "@")
                         ->addData("hashtags", "#mainframe,#productivity")
