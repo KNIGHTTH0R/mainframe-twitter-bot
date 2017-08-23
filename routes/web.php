@@ -11,7 +11,8 @@
 |
 */
 
-$app->get('/', 'ExampleController@index');
-$app->post('/conversation_added', 'ExampleController@hello');
-$app->post('/conversation_removed', 'ExampleController@bye');
+$app->get('/', 'BotController@index');
+$app->post('/conversation_added', 'BotController@hello');
+$app->post('/conversation_removed', 'BotController@bye');
+$app->post('/post', 'BotController@post');
 
