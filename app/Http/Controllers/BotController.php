@@ -3,23 +3,31 @@
 namespace App\Http\Controllers;
 
 use Aubruz\Mainframe\MainframeClient;
+use Aubruz\Mainframe\Response\AuthenticationData;
+use Aubruz\Mainframe\Response\BotResponse;
+use Aubruz\Mainframe\Response\ModalData;
+use Aubruz\Mainframe\Response\UIPayload;
+use Aubruz\Mainframe\UI\Components\TextInput;
+use Aubruz\Mainframe\UI\Components\Form;
 use Aubruz\Mainframe\UI\Button;
-use Aubruz\Mainframe\UI\Modal;
-use Aubruz\Mainframe\UI\Form;
 use Illuminate\Http\Request;
+use Abraham\TwitterOAuth\TwitterOAuth;
 
 
 class BotController extends ApiController
 {
-    private $mainframeClient;
     /**
-     * Create a new controller instance.
-     *
-     * @return void
+     * @var MainframeClient
+     */
+    private $mainframeClient;
+
+
+    /**
+     * BotController constructor.
      */
     public function __construct()
     {
-        $this->mainframeClient = new MainframeClient(env('BOT_SECRET'), 'https://api-staging.mainframe.com/bots/v1/');
+        $this->mainframeClient = new MainframeClient(env('BOT_SECRET'), env('MAINFRAME_API_URL'));
     }
 
     public function index()
@@ -27,7 +35,7 @@ class BotController extends ApiController
         return $this->respondCreated(app()->environment());
     }
 
-    public function hello (Request $request)
+    public function conversationAdded (Request $request)
     {
         $conversationId = $request->input('conversation_id');
         if(is_null($conversationId)){
@@ -37,13 +45,15 @@ class BotController extends ApiController
         return $this->respond(["success" => true]);
     }
 
-    public function bye()
+    public function conversationRemoved()
     {
+        // Delete all subscription
         return $this->respond(["success" => true]);
     }
 
     public function deleteSubscription()
     {
+        //Delete subscription in database
         return $this->respond(['success'   => true]);
     }
 
@@ -55,28 +65,38 @@ class BotController extends ApiController
 
         $requestType = $request->input('data.type');
 
+        $botResponse = new BotResponse();
+
         switch($requestType){
             case 'save':
                 //Verification of inputs
+                //Save subscription in database
                 $this->mainframeClient->setupSubscription($request->input('context.subscription_token'), "Subscription label");
+                break;
+            case 'signin':
+                $connection = new TwitterOAuth(getenv("TWITTER_API_KEY"), getenv("TWITTER_API_SECRET"));
+                $requestToken = $connection->oauth("oauth/request_token", ["oauth_callback" => "http://44d858b4.ngrok.io/oauth/request_token"]);
+                $url = $connection->url("oauth/authenticate", $requestToken);
+                $botResponse->addData(new AuthenticationData($url));
+                return $this->respond($botResponse->toArray());
                 break;
         }
 
 
-        return $this->respond([
-            'success'   => true,
-            'message'   => 'Signin with your twitter account to get direct messages and/or tweets that mention your name.',
-            'data'      =>
-                (new Modal('Choose you subscription'))
-                    ->addButton(new Button("Save", "save", "primary" , "form_post"))
-                    ->addButton(new Button("Signin with Twitter", "signin", "secondary", "open_url"))
-                    ->setRender(
-                        (new Form('myForm'))
-                        ->addTextInput("hashtags", "Enter the hashtags that you want to follow.", "#")
-                        ->addTextInput("people", "Enter the people that you want to follow.", "@")
-                        ->addData("hashtags", "#mainframe,#productivity")
-                        ->addData("people", "@MainframeApp")
-                    )->toArray()
-        ]);
+        $botResponse->addMessage('Signin with your twitter account to get direct messages and/or tweets that mention your name.');
+        $botResponse->addData((new ModalData('Choose you subscription'))
+            ->setUI((new UIPayload())
+                ->addButton((new Button("Save"))->setPayload(["type"=>"save"])->setType("form_post"))
+                ->addButton((new Button("Signin with Twitter"))->setPayload(["type"=>"signin"])->setStyle("secondary"))
+                ->setRender((new Form())
+                    ->addChildren((new TextInput("hashtags", "Enter the hashtags that you want to follow."))->setPrefix("#"))
+                    ->addChildren((new TextInput("people", "Enter the people that you want to follow."))->setPrefix("@"))
+                    ->addData("hashtags", "#mainframe,#productivity")
+                    ->addData("people", "@MainframeApp")
+                )
+            )
+        );
+
+        return $this->respond($botResponse->toArray());
     }
 }
