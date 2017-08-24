@@ -12,8 +12,12 @@
 */
 
 $app->get('/', 'BotController@index');
-$app->post('/conversation_added', 'BotController@hello');
-$app->post('/conversation_removed', 'BotController@bye');
+
+// BOT ENDPOINTS FOR MAINFRAME API
+$app->post('/conversation_added', 'BotController@conversationAdded');
+$app->post('/conversation_removed', 'BotController@conversationRemoved');
 $app->post('/post', 'BotController@post');
 $app->post('/delete_subscription', 'BotController@deleteSubscription');
 
+// BOT ENDPOINTS FOR TWITTER API
+$app->get('/oauth/request_token', 'TwitterController@requestToken');
