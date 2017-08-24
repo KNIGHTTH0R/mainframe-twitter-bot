@@ -21,6 +21,11 @@ class BotController extends ApiController
      */
     private $mainframeClient;
 
+    /**
+     * @var TwitterOAuth
+     */
+    private $twitterConnection;
+
 
     /**
      * BotController constructor.
@@ -28,6 +33,7 @@ class BotController extends ApiController
     public function __construct()
     {
         $this->mainframeClient = new MainframeClient(env('BOT_SECRET'), env('MAINFRAME_API_URL'));
+        $this->twitterConnection = new TwitterOAuth(getenv("TWITTER_API_KEY"), getenv("TWITTER_API_SECRET"));
     }
 
     public function index()
@@ -74,9 +80,8 @@ class BotController extends ApiController
                 $this->mainframeClient->setupSubscription($request->input('context.subscription_token'), "Subscription label");
                 break;
             case 'signin':
-                $connection = new TwitterOAuth(getenv("TWITTER_API_KEY"), getenv("TWITTER_API_SECRET"));
-                $requestToken = $connection->oauth("oauth/request_token", ["oauth_callback" => "http://44d858b4.ngrok.io/oauth/request_token"]);
-                $url = $connection->url("oauth/authenticate", $requestToken);
+                $requestToken = $this->twitterConnection->oauth("oauth/request_token", ["oauth_callback" => "http://44d858b4.ngrok.io/oauth/request_token"]);
+                $url = $this->twitterConnection->url("oauth/authenticate", $requestToken);
                 $botResponse->addData(new AuthenticationData($url));
                 return $this->respond($botResponse->toArray());
                 break;
