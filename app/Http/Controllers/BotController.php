@@ -2,6 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Conversation;
+use App\Models\Subscription;
+use App\Models\User;
 use Aubruz\Mainframe\MainframeClient;
 use Aubruz\Mainframe\Response\AuthenticationData;
 use Aubruz\Mainframe\Response\BotResponse;
@@ -14,6 +17,10 @@ use Illuminate\Http\Request;
 use Abraham\TwitterOAuth\TwitterOAuth;
 
 
+/**
+ * Class BotController
+ * @package App\Http\Controllers
+ */
 class BotController extends ApiController
 {
     /**
@@ -26,14 +33,20 @@ class BotController extends ApiController
      */
     private $twitterConnection;
 
+    /**
+     * @var BotResponse
+     */
+    private $botResponse;
+
 
     /**
      * BotController constructor.
      */
     public function __construct()
     {
-        $this->mainframeClient = new MainframeClient(env('BOT_SECRET'), env('MAINFRAME_API_URL'));
-        $this->twitterConnection = new TwitterOAuth(env("TWITTER_API_KEY"), env("TWITTER_API_SECRET"));
+        $this->mainframeClient      = new MainframeClient(env('BOT_SECRET'), env('MAINFRAME_API_URL'));
+        $this->twitterConnection    = new TwitterOAuth(env("TWITTER_API_KEY"), env("TWITTER_API_SECRET"));
+        $this->botResponse          = new BotResponse();
     }
 
     public function index()
@@ -48,19 +61,55 @@ class BotController extends ApiController
             $this->respondBadRequest();
         }
         $this->mainframeClient->sendMessage($conversationId, 'Hello World!!');
-        return $this->respond(["success" => true]);
+
+        //Save the new conversation
+        $conversation = new Conversation();
+        $conversation->conversation_id = $conversationId;
+        $conversation->save();
+
+        //TODO
+        // Find user
+        // Add him if he/she does not exists yet
+
+        return $this->respond($this->botResponse->toArray());
     }
 
     public function conversationRemoved()
     {
-        // Delete all subscription
-        return $this->respond(["success" => true]);
+        //TODO
+        // Delete all subscription linked to the conversation
+        return $this->respond($this->botResponse->toArray());
     }
 
     public function deleteSubscription()
     {
-        //Delete subscription in database
-        return $this->respond(['success'   => true]);
+        //TODO
+        //Delete the subscription in database
+        return $this->respond($this->botResponse->toArray());
+    }
+
+    public function enable(Request $request)
+    {
+        if(!$request->has('user_id')){
+            $this->respondBadRequest();
+        }
+        $mainframeUserID = $request->input('user_id');
+        $user = User::where('mainframe_user_id', $mainframeUserID)->first();
+        if(!$user){
+            // This is a new user
+            $user = new User();
+            $user->mainframe_user_id = $mainframeUserID;
+            $user->save();
+        }// else, nothing to do
+
+        return $this->respond($this->botResponse->toArray());
+    }
+
+    public function disable()
+    {
+        //TODO
+        //Delete the user and subscriptions attached
+        return $this->respond($this->botResponse->toArray());
     }
 
     public function post(Request $request)
@@ -70,26 +119,50 @@ class BotController extends ApiController
         }
 
         $requestType = $request->input('data.type');
+        $subscriptionExists = $request->has('context.subscription_id');
 
-        $botResponse = new BotResponse();
 
         switch($requestType){
             case 'save':
                 //Verification of inputs
-                //Save subscription in database
-                $this->mainframeClient->setupSubscription($request->input('context.subscription_token'), "Subscription label");
+                if($request->has('data.form.people')){
+
+                    $label = $request->input('data.form.people') . ' ' . $request->input('data.form.hashtags');
+                    if($subscriptionExists){
+                        $response = $this->mainframeClient->editSubscription($request->input('context.subscription_token'), $label);
+                    }else {
+                        $response = $this->mainframeClient->setupSubscription($request->input('context.subscription_token'), $label);
+                    }
+                    $response = json_decode($response->getBody());
+                    if($response->success){
+                        //Save subscription in database
+                        //TODO
+                    }
+                    return $response;
+                }
+
                 break;
             case 'signin':
                 $requestToken = $this->twitterConnection->oauth("oauth/request_token", ["oauth_callback" => "http://44d858b4.ngrok.io/oauth/request_token"]);
                 $url = $this->twitterConnection->url("oauth/authenticate", $requestToken);
-                $botResponse->addData(new AuthenticationData($url));
-                return $this->respond($botResponse->toArray());
+                $this->botResponse->addData(new AuthenticationData($url));
+                return $this->respond($this->botResponse->toArray());
+                break;
+            case null:
+                if($subscriptionExists){
+                    // Edit subscription
+                    //TODO
+
+                }else{
+                    // Return Initial screen
+                    //TODO
+                }
                 break;
         }
 
 
-        $botResponse->addMessage('Signin with your twitter account to get direct messages and/or tweets that mention your name.');
-        $botResponse->addData((new ModalData('Choose you subscription'))
+        $this->botResponse->addMessage('Signin with your twitter account to get more options.');
+        $this->botResponse->addData((new ModalData('Choose you subscription'))
             ->setUI((new UIPayload())
                 ->addButton((new Button("Save"))->setPayload(["type"=>"save"])->setType("form_post"))
                 ->addButton((new Button("Signin with Twitter"))->setPayload(["type"=>"signin"])->setStyle("secondary"))
@@ -102,6 +175,6 @@ class BotController extends ApiController
             )
         );
 
-        return $this->respond($botResponse->toArray());
+        return $this->respond($this->botResponse->toArray());
     }
 }
