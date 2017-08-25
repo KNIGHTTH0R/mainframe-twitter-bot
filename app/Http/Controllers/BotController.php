@@ -33,7 +33,7 @@ class BotController extends ApiController
     public function __construct()
     {
         $this->mainframeClient = new MainframeClient(env('BOT_SECRET'), env('MAINFRAME_API_URL'));
-        $this->twitterConnection = new TwitterOAuth(getenv("TWITTER_API_KEY"), getenv("TWITTER_API_SECRET"));
+        $this->twitterConnection = new TwitterOAuth(env("TWITTER_API_KEY"), env("TWITTER_API_SECRET"));
     }
 
     public function index()
