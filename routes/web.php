@@ -18,6 +18,8 @@ $app->post('/conversation_added', 'BotController@conversationAdded');
 $app->post('/conversation_removed', 'BotController@conversationRemoved');
 $app->post('/post', 'BotController@post');
 $app->post('/delete_subscription', 'BotController@deleteSubscription');
+$app->post('/enable', 'BotController@enable');
+$app->post('/disable', 'BotController@disable');
 
 // BOT ENDPOINTS FOR TWITTER API
 $app->get('/oauth/request_token', 'TwitterController@requestToken');
