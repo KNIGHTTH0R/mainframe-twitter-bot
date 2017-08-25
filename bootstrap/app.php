@@ -98,7 +98,7 @@ $app->group(['namespace' => 'App\Http\Controllers'], function ($app) {
 });
 
 $app->configure('app');
-
+$app->register(Laravel\Tinker\TinkerServiceProvider::class);
 
 
 return $app;
