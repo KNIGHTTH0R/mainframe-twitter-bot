@@ -97,8 +97,12 @@ $app->group(['namespace' => 'App\Http\Controllers'], function ($app) {
     require __DIR__.'/../routes/web.php';
 });
 
+// Add App config
 $app->configure('app');
+// Add Tinker
 $app->register(Laravel\Tinker\TinkerServiceProvider::class);
+// Add Eloquent
+$app->withEloquent();
 
 
 return $app;
