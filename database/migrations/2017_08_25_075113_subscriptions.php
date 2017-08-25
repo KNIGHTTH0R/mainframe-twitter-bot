@@ -15,15 +15,13 @@ class Subscriptions extends Migration
     {
         Schema::create('subscriptions', function (Blueprint $table) {
             $table->increments('id');
-            $table->integer('conversation_id')->unsigned();
-            $table->foreign('conversation_id')->references('id')->on('conversations')->onUpdate('cascade')->onDelete('cascade');
             $table->string('label');
             $table->string('hashtags')->nullable();
             $table->string('people')->nullable();
-            $table->string('twitter_oauth_token')->nullable();
-            $table->string('twitter_oauth_token_secret')->nullable();
-            $table->string('twitter_user_id')->nullable();
-            $table->string('twitter_screen_name')->nullable();
+            $table->integer('conversation_id')->unsigned();
+            $table->foreign('conversation_id')->references('id')->on('conversations')->onUpdate('cascade')->onDelete('cascade');
+            $table->integer('user_id')->unsigned();
+            $table->foreign('user_id')->references('id')->on('users')->onUpdate('cascade')->onDelete('cascade');
             $table->timestamps();
         });
     }

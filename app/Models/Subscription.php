@@ -13,10 +13,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property string $label
  * @property string $hashtags
  * @property string $people
- * @property string $twitter_oauth_token
- * @property string $twitter_oauth_token_secret
- * @property string $twitter_user_id
- * @property string $twitter_screen_name
+
  * @property-read Conversation $conversation
  */
 class Subscription extends Model
