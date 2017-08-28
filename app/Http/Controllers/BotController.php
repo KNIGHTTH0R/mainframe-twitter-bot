@@ -152,7 +152,8 @@ class BotController extends ApiController
 
     public function post(Request $request)
     {
-        if(!$request->has('context.user_id') || !$request->has('context.conversation_id') || !$request->has('context.subscription_token')) {
+        //Mandatory field
+        if(!$request->has('context.user_id')) {
             $this->respondBadRequest();
         }
 
@@ -161,25 +162,32 @@ class BotController extends ApiController
         $requestType = $request->input('data.type');
         $subscriptionExists = $request->has('context.subscription_id');
 
+        $user = User::where('mainframe_user_id', $mainframeUserID)->first();
 
         switch($requestType){
             case 'save':
                 //Verification of inputs
-                if($request->has('data.form.people')){
+                if($request->has('data.form.people') && $request->has('data.form.hashtags')){
 
-                    $subscription_token = $request->input('context.subscription_token');
+                    $subscriptionToken = $request->input('context.subscription_token');
                     $people = $request->input('data.form.people');
                     $hashtags = $request->input('data.form.hashtags');
-                    $label = $people . ' ' . $hashtags;
+
+                    if(!self::inputCheck($people, '@') || !self::inputCheck($hashtags, '#')){
+                        $this->botResponse->addMessage("You must separate your inputs by a comma without space.");
+                        $this->botResponse->setSuccess(false);
+                        return $this->respond($this->botResponse->toArray());
+                    }
+
+                    $label = implode(' ',explode(',', $people)) . ' ' . implode(' ',explode(',', $hashtags));
                     if($subscriptionExists){
-                        $response = $this->mainframeClient->editSubscription($subscription_token, $label);
+                        $response = $this->mainframeClient->editSubscription($subscriptionToken, $label);
                     }else {
-                        $response = $this->mainframeClient->setupSubscription($subscription_token, $label);
+                        $response = $this->mainframeClient->setupSubscription($subscriptionToken, $label);
                     }
                     $response = json_decode($response->getBody());
                     if($response->success){
                         //Create new subscription
-                        $user = User::where('mainframe_user_id', $mainframeUserID)->first();
                         $conversation = Conversation::where('mainframe_conversation_id', $mainframeConversationID)->first();
 
                         $subscription = new Subscription();
@@ -205,6 +213,7 @@ class BotController extends ApiController
             case null:
                 if($subscriptionExists){
                     // Edit subscription
+                    // Return initial screen with filled form
                     //TODO
 
                 }else{
@@ -214,8 +223,10 @@ class BotController extends ApiController
                 break;
         }
 
+        if(!$user->twitter_user_id){
+            $this->botResponse->addMessage('Signin with your twitter account to get more options.');
+        }
 
-        $this->botResponse->addMessage('Signin with your twitter account to get more options.');
         $this->botResponse->addData((new ModalData('Choose you subscription'))
             ->setUI((new UIPayload())
                 ->addButton((new Button("Save"))->setPayload(["type"=>"save"])->setType("form_post"))
@@ -230,5 +241,15 @@ class BotController extends ApiController
         );
 
         return $this->respond($this->botResponse->toArray());
+    }
+
+    private static function inputCheck($input, $prefix){
+        $input = explode(',', $input);
+        foreach($input as $value){
+            if(substr($value, 0, 1) !== $prefix){
+                return false;
+            }
+        }
+        return true;
     }
 }
