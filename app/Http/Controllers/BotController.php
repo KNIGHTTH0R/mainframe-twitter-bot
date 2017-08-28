@@ -56,35 +56,62 @@ class BotController extends ApiController
 
     public function conversationAdded (Request $request)
     {
-        $conversationId = $request->input('conversation_id');
-        if(is_null($conversationId)){
+        $conversationID = $request->input('conversation_id');
+        $mainframeUserID = $request->input('user_id');
+        if(!$conversationID || !$mainframeUserID){
             $this->respondBadRequest();
         }
-        $this->mainframeClient->sendMessage($conversationId, 'Hello World!!');
+        $this->mainframeClient->sendMessage($conversationID, 'Hello World!!');
 
         //Save the new conversation
         $conversation = new Conversation();
-        $conversation->conversation_id = $conversationId;
+        $conversation->mainframe_conversation_id = $conversationID;
         $conversation->save();
 
-        //TODO
-        // Find user
-        // Add him if he/she does not exists yet
+        $user = User::where('mainframe_user_id', $mainframeUserID)->first();
+        if(!$user){
+            $user = new User();
+            $user->mainframe_user_id = $mainframeUserID;
+            $user->save();
+        }
 
         return $this->respond($this->botResponse->toArray());
     }
 
-    public function conversationRemoved()
+    public function conversationRemoved(Request $request)
     {
-        //TODO
-        // Delete all subscription linked to the conversation
+        $conversationID = $request->input('mainframe_conversation_id');
+        $mainframeUserID = $request->input('user_id');
+        if(!$conversationID || !$mainframeUserID){
+            $this->respondBadRequest();
+        }
+
+        $conversation = Conversation::where('mainframe_conversation_id', $conversationID)->first();
+        if(!$conversation) {
+            $this->botResponse->setSuccess(false);
+            return $this->respond($this->botResponse->toArray());
+        }
+
+        $conversation->delete();
+
         return $this->respond($this->botResponse->toArray());
     }
 
-    public function deleteSubscription()
+    public function deleteSubscription(Request $request)
     {
-        //TODO
-        //Delete the subscription in database
+        $subscriptionID = $request->input('subscription_id');
+        if(!$subscriptionID){
+            $this->respondBadRequest();
+        }
+
+        $subscription = Subscription::where('mainframe_subscription_id', $subscriptionID)->first();
+        if(!$subscription){
+            $this->botResponse->setSuccess(false);
+            return $this->respond($this->botResponse->toArray());
+        }
+
+        $subscription->delete();
+
         return $this->respond($this->botResponse->toArray());
     }
 
@@ -100,15 +127,26 @@ class BotController extends ApiController
             $user = new User();
             $user->mainframe_user_id = $mainframeUserID;
             $user->save();
-        }// else, nothing to do
+        }
 
         return $this->respond($this->botResponse->toArray());
     }
 
-    public function disable()
+    public function disable(Request $request)
     {
-        //TODO
-        //Delete the user and subscriptions attached
+        if(!$request->has('user_id')){
+            $this->respondBadRequest();
+        }
+        $mainframeUserID = $request->input('user_id');
+        $user = User::where('mainframe_user_id', $mainframeUserID)->first();
+
+        if(!$user) {
+            $this->botResponse->setSuccess(false);
+            return $this->respond($this->botResponse->toArray());
+        }
+
+        $user->delete();
+
         return $this->respond($this->botResponse->toArray());
     }
 
@@ -118,6 +156,8 @@ class BotController extends ApiController
             $this->respondBadRequest();
         }
 
+        $mainframeUserID = $request->input('context.user_id');
+        $mainframeConversationID = $request->input('context.conversation_id');
         $requestType = $request->input('data.type');
         $subscriptionExists = $request->has('context.subscription_id');
 
@@ -127,18 +167,32 @@ class BotController extends ApiController
                 //Verification of inputs
                 if($request->has('data.form.people')){
 
-                    $label = $request->input('data.form.people') . ' ' . $request->input('data.form.hashtags');
+                    $subscription_token = $request->input('context.subscription_token');
+                    $people = $request->input('data.form.people');
+                    $hashtags = $request->input('data.form.hashtags');
+                    $label = $people . ' ' . $hashtags;
                     if($subscriptionExists){
-                        $response = $this->mainframeClient->editSubscription($request->input('context.subscription_token'), $label);
+                        $response = $this->mainframeClient->editSubscription($subscription_token, $label);
                     }else {
-                        $response = $this->mainframeClient->setupSubscription($request->input('context.subscription_token'), $label);
+                        $response = $this->mainframeClient->setupSubscription($subscription_token, $label);
                     }
                     $response = json_decode($response->getBody());
                     if($response->success){
-                        //Save subscription in database
-                        //TODO
+                        //Create new subscription
+                        $user = User::where('mainframe_user_id', $mainframeUserID)->first();
+                        $conversation = Conversation::where('mainframe_conversation_id', $mainframeConversationID)->first();
+
+                        $subscription = new Subscription();
+                        $subscription->label = $label;
+                        $subscription->hashtags = $hashtags;
+                        $subscription->people = $people;
+                        $subscription->mainframe_subscription_id = $response->subscription_id;
+                        $subscription->conversation_id = $conversation->id;
+                        $subscription->user_id = $user->id;
+                        $subscription->save();
                     }
-                    return $response;
+                    //TODO Respond with proper answer
+                    return $this->respond($this->botResponse->toArray());
                 }
 
                 break;
