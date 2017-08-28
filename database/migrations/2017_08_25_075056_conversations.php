@@ -15,7 +15,7 @@ class Conversations extends Migration
     {
         Schema::create('conversations', function (Blueprint $table) {
             $table->increments('id');
-            $table->string('conversation_id');
+            $table->string('mainframe_conversation_id');
             $table->timestamps();
         });
     }

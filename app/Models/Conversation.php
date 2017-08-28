@@ -10,7 +10,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * Class Conversation
  * @package App\Model
  *
- * @property string $conversation_id
+ * @property string $mainframe_conversation_id
  * @property-read Collection|Subscription[] $subscriptions
  */
 class Conversation extends Model

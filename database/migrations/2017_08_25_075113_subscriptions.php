@@ -16,6 +16,7 @@ class Subscriptions extends Migration
         Schema::create('subscriptions', function (Blueprint $table) {
             $table->increments('id');
             $table->string('label');
+            $table->string('mainframe_subscription_id');
             $table->string('hashtags')->nullable();
             $table->string('people')->nullable();
             $table->integer('conversation_id')->unsigned();
