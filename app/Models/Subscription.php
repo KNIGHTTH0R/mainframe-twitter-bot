@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 /**
  * Class Subscription
- * @package App\Model
+ * @package App\Models
  *
  * @property string $conversation_id
  * @property string $user_id

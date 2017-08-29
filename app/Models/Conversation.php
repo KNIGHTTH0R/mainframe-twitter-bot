@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 /**
  * Class Conversation
- * @package App\Model
+ * @package App\Models
  *
  * @property string $mainframe_conversation_id
  * @property-read Collection|Subscription[] $subscriptions

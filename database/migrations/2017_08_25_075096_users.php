@@ -16,6 +16,7 @@ class Users extends Migration
         Schema::create('users', function (Blueprint $table) {
             $table->increments('id');
             $table->string('mainframe_user_id')->unique();
+            $table->string('twitter_oauth_request_token')->nullable();
             $table->string('twitter_oauth_token')->nullable();
             $table->string('twitter_oauth_token_secret')->nullable();
             $table->string('twitter_user_id')->nullable();

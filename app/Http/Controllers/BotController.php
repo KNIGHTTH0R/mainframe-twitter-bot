@@ -80,9 +80,9 @@ class BotController extends ApiController
 
     public function conversationRemoved(Request $request)
     {
-        $conversationID = $request->input('mainframe_conversation_id');
+        $conversationID = $request->input('conversation_id');
         $mainframeUserID = $request->input('user_id');
-        if(!$conversationID || !$mainframeUserID){
+        if(!$conversationID){
             $this->respondBadRequest();
         }
 
@@ -163,6 +163,7 @@ class BotController extends ApiController
         $subscriptionExists = $request->has('context.subscription_id');
 
         $user = User::where('mainframe_user_id', $mainframeUserID)->first();
+        //TODO handle case where user is not found
 
         switch($requestType){
             case 'save':
@@ -206,7 +207,9 @@ class BotController extends ApiController
                 break;
             case 'signin':
                 $requestToken = $this->twitterConnection->oauth("oauth/request_token", ["oauth_callback" => "http://44d858b4.ngrok.io/oauth/request_token"]);
-                $url = $this->twitterConnection->url("oauth/authenticate", $requestToken);
+                $user->twitter_oauth_request_token = $requestToken["oauth_token"];
+                $user->save();
+                $url = $this->twitterConnection->url("oauth/authenticate",["oauth_token" => $requestToken["oauth_token"]]);
                 $this->botResponse->addData(new AuthenticationData($url));
                 return $this->respond($this->botResponse->toArray());
                 break;
