@@ -51,6 +51,8 @@ class TwitterController extends ApiController
         $user->twitter_user_id = $access_token["user_id"];
         $user->twitter_screen_name = $access_token["screen_name"];
         $user->save();
+
+        //TODO Use view to invite user to go back to the app
         return $access_token;
 
     }
@@ -60,4 +62,17 @@ class TwitterController extends ApiController
 
     }
 
+    public function crcCheck(Request $request)
+    {
+        if(!$request->has('crc_token')){
+            $this->respondBadRequest();
+        }
+
+        $crcToken = $request->has('crc_token');
+        $hashDigest = hash_hmac('sha256', $crcToken, env("TWITTER_API_SECRET"));
+
+        return $this->respond([
+            "response_token" => 'sha256=' . base64_encode($hashDigest)
+        ]);
+    }
 }
