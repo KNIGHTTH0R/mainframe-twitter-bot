@@ -38,7 +38,6 @@ class BotController extends ApiController
      */
     private $botResponse;
 
-
     /**
      * BotController constructor.
      */
@@ -206,7 +205,7 @@ class BotController extends ApiController
 
                 break;
             case 'signin':
-                $requestToken = $this->twitterConnection->oauth("oauth/request_token", ["oauth_callback" => "http://44d858b4.ngrok.io/oauth/request_token"]);
+                $requestToken = $this->twitterConnection->oauth("oauth/request_token", ["oauth_callback" => "https://b52d9030.ngrok.io/oauth/request_token"]);
                 $user->twitter_oauth_request_token = $requestToken["oauth_token"];
                 $user->save();
                 $url = $this->twitterConnection->url("oauth/authenticate",["oauth_token" => $requestToken["oauth_token"]]);
@@ -228,6 +227,13 @@ class BotController extends ApiController
 
         if(!$user->twitter_user_id){
             $this->botResponse->addMessage('Signin with your twitter account to get more options.');
+        }
+
+        if($user->twitter_oauth_token){
+            // user authentified via twitter
+            //TODO Add multiselect UI
+            $response = $this->twitterConnection->post("account_activity/webhooks", ["url" => urlencode("https://b52d9030.ngrok.io/webhook/twitter")]);
+            return $this->respond($response);
         }
 
         $this->botResponse->addData((new ModalData('Choose you subscription'))
