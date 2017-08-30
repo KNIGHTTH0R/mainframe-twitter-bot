@@ -99,10 +99,17 @@ $app->group(['namespace' => 'App\Http\Controllers'], function ($app) {
 
 // Add App config
 $app->configure('app');
+$app->configure('laravel-twitter-streaming-api');
 // Add Tinker
 $app->register(Laravel\Tinker\TinkerServiceProvider::class);
 // Add Eloquent
 $app->withEloquent();
 
+// Add twitter stream provider and alias
+$app->register(Spatie\LaravelTwitterStreamingApi\TwitterStreamingApiServiceProvider::class);
+if (!class_exists('TwitterStreamingApi')) {
+    //class_alias('Spatie\LaravelTwitterStreamingApi\TwitterStreamingApiFacade::class', 'TwitterStreamingApi');
+}
+$app->withFacades(true, ['Spatie\LaravelTwitterStreamingApi\TwitterStreamingApiFacade' => 'TwitterStreamingApi']);
 
 return $app;

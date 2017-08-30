@@ -23,4 +23,5 @@ $app->post('/disable', 'BotController@disable');
 
 // BOT ENDPOINTS FOR TWITTER API
 $app->get('/oauth/request_token', 'TwitterController@requestToken');
-$app->get('/webhook/twitter', 'TwitterController@webhook');
+$app->get('/webhook/twitter', 'TwitterController@crcCheck');
+$app->post('/webhook/twitter', 'TwitterController@webhook');
