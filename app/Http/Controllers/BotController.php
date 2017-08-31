@@ -232,8 +232,8 @@ class BotController extends ApiController
         if($user->twitter_oauth_token){
             // user authentified via twitter
             //TODO Add multiselect UI
-            $response = $this->twitterConnection->post("account_activity/webhooks", ["url" => urlencode("https://b52d9030.ngrok.io/webhook/twitter")]);
-            return $this->respond($response);
+           // $response = $this->twitterConnection->post("account_activity/webhooks", ["url" => urlencode("https://b52d9030.ngrok.io/webhook/twitter")]);
+            //return $this->respond($response);
         }
 
         $this->botResponse->addData((new ModalData('Choose you subscription'))

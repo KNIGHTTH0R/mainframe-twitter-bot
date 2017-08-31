@@ -13,7 +13,8 @@ class Kernel extends ConsoleKernel
      * @var array
      */
     protected $commands = [
-        Commands\TwitterPublicStream::class
+        Commands\TwitterPublicStream::class,
+        Commands\TwitterSearch::class
     ];
 
     /**
