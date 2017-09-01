@@ -70,6 +70,8 @@ class TwitterSearch extends Command
             "resources" => "search,statuses,application"
         ]);*/
 
+        // $response = $this->twitterConnection->post("account_activity/webhooks", ["url" => urlencode("https://b52d9030.ngrok.io/webhook/twitter")]);
+        //return $this->respond($response);
 
         dd($response);
     }
