@@ -49,11 +49,18 @@ class BotController extends ApiController
         $this->botResponse          = new BotResponse();
     }
 
+    /**
+     * @return \Illuminate\Http\JsonResponse
+     */
     public function index()
     {
         return $this->respondCreated(app()->environment());
     }
 
+    /**
+     * @param Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
     public function conversationAdded (Request $request)
     {
         $conversationID = $request->input('conversation_id');
@@ -78,10 +85,14 @@ class BotController extends ApiController
         return $this->respond($this->botResponse->toArray());
     }
 
+    /**
+     * @param Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
     public function conversationRemoved(Request $request)
     {
         $conversationID = $request->input('conversation_id');
-        $mainframeUserID = $request->input('user_id');
+
         if(!$conversationID){
             $this->respondBadRequest();
         }
@@ -97,6 +108,10 @@ class BotController extends ApiController
         return $this->respond($this->botResponse->toArray());
     }
 
+    /**
+     * @param Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
     public function deleteSubscription(Request $request)
     {
         $subscriptionID = $request->input('subscription_id');
@@ -115,6 +130,10 @@ class BotController extends ApiController
         return $this->respond($this->botResponse->toArray());
     }
 
+    /**
+     * @param Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
     public function enable(Request $request)
     {
         if(!$request->has('user_id')){
@@ -132,6 +151,10 @@ class BotController extends ApiController
         return $this->respond($this->botResponse->toArray());
     }
 
+    /**
+     * @param Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
     public function disable(Request $request)
     {
         if(!$request->has('user_id')){
@@ -150,6 +173,11 @@ class BotController extends ApiController
         return $this->respond($this->botResponse->toArray());
     }
 
+    /**
+     * @param Request $request
+     * @return \Illuminate\Http\JsonResponse
+     * @throws \Abraham\TwitterOAuth\TwitterOAuthException
+     */
     public function post(Request $request)
     {
         //Mandatory field
@@ -273,8 +301,7 @@ class BotController extends ApiController
             $form->addData("user_account", $userAccount);
         }else {
             $form->addData("hashtags", "#mainframe,#productivity")
-                ->addData("people", "@MainframeApp")
-                ->addData("user_account", ["mention", "timeline"]);
+                ->addData("people", "@MainframeApp");
         }
 
 
@@ -289,6 +316,11 @@ class BotController extends ApiController
         return $this->respond($this->botResponse->toArray());
     }
 
+    /**
+     * @param $input
+     * @param $prefix
+     * @return bool
+     */
     private static function inputCheck($input, $prefix){
         if($input !== '') {
             $input = explode(',', $input);
