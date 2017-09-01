@@ -2,16 +2,20 @@
 
 namespace App\Jobs;
 
-class ExampleJob extends Job
+use App\Models\User;
+
+class GetHashtags extends Job
 {
+
     /**
      * Create a new job instance.
      *
+     * @param string $screenName
      * @return void
      */
-    public function __construct()
+    public function __construct($conversation, $subscription, $user)
     {
-        //
+        parent::__construct($conversation, $subscription, $user);
     }
 
     /**
