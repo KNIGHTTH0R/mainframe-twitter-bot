@@ -27,6 +27,11 @@ class GetHashtags extends Job
      */
     public function handle()
     {
-        //
+        $response = $this->twitterConnection->get("search/tweets", [
+            "q"             => urlencode("#road OR #trees"),
+            "result_type"   => "recent"
+        ]);
+
+        // Send in conversation
     }
 }

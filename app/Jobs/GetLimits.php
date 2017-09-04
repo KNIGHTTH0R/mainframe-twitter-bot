@@ -2,9 +2,8 @@
 
 namespace App\Jobs;
 
-use App\Models\User;
 
-class GetHashtags extends Job
+class GetLimits extends Job
 {
 
     /**
@@ -25,8 +24,8 @@ class GetHashtags extends Job
      */
     public function handle()
     {
-        $response = $this->twitterConnection->get("statuses/user_timeline",[
-            "screen_name" => "sjtagg89"
+        $response = $this->twitterConnection->get("application/rate_limit_status",[
+            "resources" => "search,statuses,application"
         ]);
 
     }

@@ -26,6 +26,6 @@ class GetHashtags extends Job
      */
     public function handle()
     {
-        //
+        $response = $this->twitterConnection->get("statuses/home_timeline");
     }
 }

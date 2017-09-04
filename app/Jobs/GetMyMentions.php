@@ -27,6 +27,9 @@ class GetHashtags extends Job
      */
     public function handle()
     {
-        //
+        $response = $this->twitterConnection->get("search/tweets", [
+            "q"             => urlencode("@aubruz"),
+            "result_type"   => "recent"
+        ]);
     }
 }
