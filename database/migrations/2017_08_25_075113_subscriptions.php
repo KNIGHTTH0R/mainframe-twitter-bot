@@ -21,6 +21,8 @@ class Subscriptions extends Migration
             $table->string('people')->nullable();
             $table->string('hashtags_since_id')->nullable();
             $table->string('people_since_id')->nullable();
+            $table->string('mention_since_id')->nullable();
+            $table->string('timeline_since_id')->nullable();
             $table->boolean('get_my_timeline')->default(false);
             $table->boolean('get_my_mention')->default(false);
             $table->integer('conversation_id')->unsigned();

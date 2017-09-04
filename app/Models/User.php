@@ -20,6 +20,10 @@ use Illuminate\Contracts\Auth\Access\Authorizable as AuthorizableContract;
  * @property string $twitter_oauth_token_secret
  * @property string $twitter_user_id
  * @property string $twitter_screen_name
+ * @property integer $twitter_home_timeline_limit
+ * @property integer $twitter_user_timeline_limit
+ * @property integer $twitter_search_limit
+ * @property integer $twitter_limits_limit
  * @property-read Collection|Subscription[] $subscriptions
  */
 class User extends Model implements AuthenticatableContract, AuthorizableContract
@@ -50,6 +54,17 @@ class User extends Model implements AuthenticatableContract, AuthorizableContrac
     public function subscriptions()
     {
         return $this->hasMany('App\Models\Subscription');
+    }
+
+    public function resetTwitterData(){
+        $this->twitter_oauth_token = null;
+        $this->twitter_oauth_token_secret = null;
+        $this->twitter_screen_name = null;
+        $this->twitter_user_id = null;
+        $this->twitter_home_timeline_limit = 0;
+        $this->twitter_user_timeline_limit = 0;
+        $this->twitter_search_limit = 0;
+        $this->twitter_limits_limit = 0;
     }
 
 }

@@ -17,6 +17,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property string $people
  * @property string $hashtags_since_id
  * @property string $people_since_id
+ * @property string $mention_since_id
+ * @property string $timeline_since_id
  * @property boolean $get_my_timeline
  * @property boolean $get_my_mention
  * @property-read User $user

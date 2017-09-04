@@ -21,6 +21,10 @@ class Users extends Migration
             $table->string('twitter_oauth_token_secret')->nullable();
             $table->string('twitter_user_id')->nullable();
             $table->string('twitter_screen_name')->nullable();
+            $table->integer('twitter_home_timeline_limit')->default(0);
+            $table->integer('twitter_user_timeline_limit')->default(0);
+            $table->integer('twitter_search_limit')->default(0);
+            $table->integer('twitter_limits_limit')->default(0);
             $table->timestamps();
         });
     }
