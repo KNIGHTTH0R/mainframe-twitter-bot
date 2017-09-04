@@ -2,11 +2,13 @@
 
 namespace App\Jobs;
 
+use Abraham\TwitterOAuth\TwitterOAuth;
 use App\Models\Conversation;
 use App\Models\Subscription;
 use App\Models\User;
+use Aubruz\Mainframe\MainframeClient;
 
-class GetHashtags extends Job
+class GetMyTimeline extends Job
 {
     /**
      * Create a new job instance.
@@ -26,6 +28,14 @@ class GetHashtags extends Job
      */
     public function handle()
     {
+        $this->mainframeClient = new MainframeClient(env('BOT_SECRET'), env('MAINFRAME_API_URL'));
+        $this->twitterConnection    = new TwitterOAuth(
+            env("TWITTER_API_KEY"),
+            env("TWITTER_API_SECRET"),
+            $this->user->twitter_oauth_token,
+            $this->user->twitter_oauth_token_secret
+        );
+
         $response = $this->twitterConnection->get("statuses/home_timeline");
     }
 }

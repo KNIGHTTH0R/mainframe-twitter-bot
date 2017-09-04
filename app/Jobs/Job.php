@@ -40,12 +40,12 @@ abstract class Job implements ShouldQueue
     /**
      * @var MainframeClient
      */
-    protected $mainframeClient;
+    protected $mainframeClient = null;
 
     /**
      * @var TwitterOAuth
      */
-    protected $twitterConnection;
+    protected $twitterConnection = null;
 
     /**
      * @var User
@@ -54,20 +54,14 @@ abstract class Job implements ShouldQueue
 
     /**
      * Job constructor.
-     * @param $conversation
-     * @param $subscription
+     * @param Conversation $conversation
+     * @param Subscription $subscription
+     * @param User $user
      */
     public function __construct($conversation, $subscription, $user)
     {
         $this->conversation         = $conversation;
         $this->subscription         = $subscription;
         $this->user                 = $user;
-        $this->mainframeClient      = new MainframeClient(env('BOT_SECRET'), env('MAINFRAME_API_URL'));
-        $this->twitterConnection    = new TwitterOAuth(
-                                            env("TWITTER_API_KEY"),
-                                            env("TWITTER_API_SECRET"),
-                                            $user->twitter_oauth_token,
-                                            $user->twitter_oauth_token_secret
-                                        );
     }
 }
