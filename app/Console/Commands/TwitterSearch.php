@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands;
 
+use App\Models\User;
 use Illuminate\Console\Command;
 use Abraham\TwitterOAuth\TwitterOAuth;
 
@@ -45,11 +46,23 @@ class TwitterSearch extends Command
      */
     public function handle()
     {
+        $users = User::with('subscriptions.conversation')->get();
+
+        foreach($users as $user){
+            foreach($user->subscriptions as $subscription){
+
+                $conversationID = $subscription->conversation->mainframe_conversation_id;
+                $this->info($conversationID);
+            }
+        }
+
+
         //Hashtags
-        $response = $this->twitterConnection->get("search/tweets", [
-            "q"             => urlencode("#road OR #trees"),
-            "result_type"   => "recent"
-        ]);
+        /*$response = $this->twitterConnection->get("search/tweets", [
+            "q"             => urlencode("#geneve OR #brest"),
+            "result_type"   => "recent",
+            "count"         => 50
+        ]);*/
 
         // Get tweets to you attention
         /*$response = $this->twitterConnection->get("search/tweets", [
@@ -73,6 +86,6 @@ class TwitterSearch extends Command
         // $response = $this->twitterConnection->post("account_activity/webhooks", ["url" => urlencode("https://b52d9030.ngrok.io/webhook/twitter")]);
         //return $this->respond($response);
 
-        dd($response);
+       // dd($response);
     }
 }

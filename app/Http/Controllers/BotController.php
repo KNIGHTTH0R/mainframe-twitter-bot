@@ -11,6 +11,7 @@ use Aubruz\Mainframe\Response\BotResponse;
 use Aubruz\Mainframe\Response\ModalData;
 use Aubruz\Mainframe\Response\UIPayload;
 use Aubruz\Mainframe\UI\Components\MultiSelect;
+use Aubruz\Mainframe\UI\Components\RadioButtonSelect;
 use Aubruz\Mainframe\UI\Components\TextInput;
 use Aubruz\Mainframe\UI\Components\Form;
 use Aubruz\Mainframe\UI\Button;
@@ -194,16 +195,16 @@ class BotController extends ApiController
         $mainframeSubscriptionID = $request->input('context.subscription_id');
 
         $user = User::where('mainframe_user_id', $mainframeUserID)->first();
-        //TODO handle case where user is not found
+        if(!$user){
+            $user = new User();
+            $user->mainframe_user_id = $mainframeUserID;
+            $user->save();
+        }
 
         // user not authenticated
-        if(!$user->twitter_oauth_token){
-
-            $requestToken = $this->twitterConnection->oauth("oauth/request_token", ["oauth_callback" => "https://b52d9030.ngrok.io/oauth/request_token"]);
-            $user->twitter_oauth_request_token = $requestToken["oauth_token"];
-            $user->save();
-            $url = $this->twitterConnection->url("oauth/authenticate",["oauth_token" => $requestToken["oauth_token"]]);
-            $this->botResponse->addData(new AuthenticationData($url));
+        if(!$user->twitter_oauth_token && $request->input('data.payload.type') != 'authentication_success'){
+            $url = $this->getTwitterAuthUrl($user);
+            $this->botResponse->addData((new AuthenticationData($url))->addPayload(["type"=>"authentication_success"]));
             return $this->respond($this->botResponse->toArray());
         }
 
@@ -271,8 +272,34 @@ class BotController extends ApiController
 
                 break;
             case 'signout':
-                //TODO remove twitter tokens
-                //TODO remove user' subscription
+                $form = (new Form())->addChildren((new RadioButtonSelect('confirm', ''))
+                    ->addOptions(['ok' => 'I understand', 'not_ok' => 'Never mind']))
+                    ->addData('confirm', 'not_ok');
+
+                $this->botResponse->addData((new ModalData('Are you sure?'))
+                    ->setUI((new UIPayload())
+                        ->addButton((new Button("OK"))->setPayload(["type"=>"safe_signout"])->setType("form_post"))
+                        ->addButton((new Button("Cancel"))->setStyle("close_modal"))
+                        ->setRender($form)
+                    )
+                );
+                $this->botResponse->addMessage("If you signout all your subscriptions will be erased!");
+                $this->botResponse->setSuccess(false);
+                return $this->respond($this->botResponse->toArray());
+                break;
+            case 'safe_signout':
+
+                if($request->has('data.form.confirm') && $request->input('data.form.confirm') === 'ok') {
+
+                    $user->resetTwitterData();
+                    $userSubscriptions = $user->subscriptions;
+                    foreach ($userSubscriptions as $subscription) {
+                        $this->mainframeClient->deleteSubscription($subscription->conversation->mainframe_conversation_id, $subscription->mainframe_subscription_id);
+                    }
+                    $url = $this->getTwitterAuthUrl($user);
+                    $this->botResponse->addData((new AuthenticationData($url))->addPayload(["type" => "authentication_success"]));
+                    return $this->respond($this->botResponse->toArray());
+                }
                 break;
             case 'edit':
 
@@ -286,7 +313,7 @@ class BotController extends ApiController
                 ->addOptions(["timeline" => "Get your timeline"])
                 ->addOptions(["mention" => "Get the tweets that mention your name"]));
 
-        if($requestType === 'edit' && $subscriptionExists) {
+        if(($requestType === 'edit' || $requestType === 'safe_signout') && $subscriptionExists) {
             $subscription = Subscription::where('mainframe_subscription_id', $mainframeSubscriptionID)->first();
             $form->addData("hashtags", $subscription->hashtags)
                 ->addData("people", $subscription->people);
@@ -314,6 +341,15 @@ class BotController extends ApiController
         );
 
         return $this->respond($this->botResponse->toArray());
+    }
+
+    private function getTwitterAuthUrl(User $user)
+    {
+        $requestToken = $this->twitterConnection->oauth("oauth/request_token", ["oauth_callback" => env("TWITTER_OAUTH_CALLBACK")]);
+        $user->twitter_oauth_request_token = $requestToken["oauth_token"];
+        $user->save();
+        $url = $this->twitterConnection->url("oauth/authenticate",["oauth_token" => $requestToken["oauth_token"]]);
+        return $url;
     }
 
     /**
