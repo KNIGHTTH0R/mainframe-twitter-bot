@@ -67,12 +67,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/aubruz/mainframe-bot-api.git",
-                "reference": "26cd2e1d1f4da4d6906fc6172e9ea6325e7c07f2"
+                "reference": "e09c4753e1dc251648740d7abc426e46395abeb4"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/aubruz/mainframe-bot-api/zipball/26cd2e1d1f4da4d6906fc6172e9ea6325e7c07f2",
-                "reference": "26cd2e1d1f4da4d6906fc6172e9ea6325e7c07f2",
+                "url": "https://api.github.com/repos/aubruz/mainframe-bot-api/zipball/e09c4753e1dc251648740d7abc426e46395abeb4",
+                "reference": "e09c4753e1dc251648740d7abc426e46395abeb4",
                 "shasum": ""
             },
             "require": {
@@ -102,7 +102,7 @@
                 "bot",
                 "mainframe"
             ],
-            "time": "2017-09-04 09:52:34"
+            "time": "2017-09-04 15:08:00"
         },
         {
             "name": "dnoegel/php-xdg-base-dir",

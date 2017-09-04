@@ -3,12 +3,14 @@
 namespace App\Jobs;
 
 use Abraham\TwitterOAuth\TwitterOAuth;
+use App\Libraries\Tweet;
 use Aubruz\Mainframe\MainframeClient;
 use Aubruz\Mainframe\Response\BotResponse;
 use Aubruz\Mainframe\Response\EmbedData;
 use Aubruz\Mainframe\Response\UIPayload;
 use Aubruz\Mainframe\UI\Components\Author;
 use Aubruz\Mainframe\UI\Components\Message;
+use Aubruz\Mainframe\UI\Components\Text;
 
 class GetHashtags extends Job
 {
@@ -49,27 +51,30 @@ class GetHashtags extends Job
 
 
         $response = $this->twitterConnection->get("search/tweets", [
-            "q"             => urlencode("#geneva"),
+            "q"             => "#TabloidCover -filter:retweets AND -filter:replies",
             "result_type"   => "recent",
-            "count"         => 1
+            "count"         => 2
         ]);
 
         foreach($response->statuses as $tweet){
+
             //dd($tweet);
-
-            $message = new Message("New tweet");
-            $message->addChildren(new Author($tweet->user->name, $tweet->user->screen_name ));
-
-
-            $botResponse = new BotResponse();
-            $botResponse->addData((new EmbedData())->setUI(
-                (new UIPayload())->setRender($message))
+            $image = null;
+            if(property_exists($tweet, "media")){
+                $image = $tweet->media[0]->media_url_https;
+            }
+            $tweetUI = new Tweet(
+                $tweet->user->name,
+                $tweet->user->screen_name,
+                $tweet->text,
+                $tweet->user->profile_image_url_https,
+                $image
             );
+           // $tweet->id_str;
 
-            $this->mainframeClient->sendMessage($this->conversation->mainframe_conversation_id, $botResponse->toArray());
+            $resp = $this->mainframeClient->sendMessage($this->conversation->mainframe_conversation_id, $tweetUI->getUIPayload(), $this->subscription->mainframe_subscription_id);
+            //d($response);
         }
 
-
-        // Send in conversation
     }
 }
