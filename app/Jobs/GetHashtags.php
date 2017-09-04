@@ -4,6 +4,11 @@ namespace App\Jobs;
 
 use Abraham\TwitterOAuth\TwitterOAuth;
 use Aubruz\Mainframe\MainframeClient;
+use Aubruz\Mainframe\Response\BotResponse;
+use Aubruz\Mainframe\Response\EmbedData;
+use Aubruz\Mainframe\Response\UIPayload;
+use Aubruz\Mainframe\UI\Components\Author;
+use Aubruz\Mainframe\UI\Components\Message;
 
 class GetHashtags extends Job
 {
@@ -20,9 +25,9 @@ class GetHashtags extends Job
      * @param $user
      * @param $hashtags
      */
-    public function __construct($mainframeClient, $conversation, $subscription, $user, $hashtags)
+    public function __construct($conversation, $subscription, $user, $hashtags)
     {
-        parent::__construct($mainframeClient, $conversation, $subscription, $user);
+        parent::__construct($conversation, $subscription, $user);
         $this->hashtags = $hashtags;
         //
     }
@@ -34,7 +39,7 @@ class GetHashtags extends Job
      */
     public function handle()
     {
-        $this->mainframeClient = new MainframeClient(env('BOT_SECRET'), env('MAINFRAME_API_URL'));
+        $this->mainframeClient      = new MainframeClient(env('BOT_SECRET'), env('MAINFRAME_API_URL'));
         $this->twitterConnection    = new TwitterOAuth(
                                             env("TWITTER_API_KEY"),
                                             env("TWITTER_API_SECRET"),
@@ -44,13 +49,27 @@ class GetHashtags extends Job
 
 
         $response = $this->twitterConnection->get("search/tweets", [
-            "q"             => urlencode("#road OR #trees"),
-            "result_type"   => "recent"
+            "q"             => urlencode("#geneva"),
+            "result_type"   => "recent",
+            "count"         => 1
         ]);
 
-        dd($response);
+        foreach($response->statuses as $tweet){
+            //dd($tweet);
 
-        $this->mainframeClient->sendMessage($this->conversation, "Tweet");
+            $message = new Message("New tweet");
+            $message->addChildren(new Author($tweet->user->name, $tweet->user->screen_name ));
+
+
+            $botResponse = new BotResponse();
+            $botResponse->addData((new EmbedData())->setUI(
+                (new UIPayload())->setRender($message))
+            );
+
+            $this->mainframeClient->sendMessage($this->conversation->mainframe_conversation_id, $botResponse->toArray());
+        }
+
+
         // Send in conversation
     }
 }
