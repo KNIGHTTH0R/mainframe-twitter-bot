@@ -3,11 +3,20 @@
 namespace App\Console\Commands;
 
 use App\Models\User;
+use Aubruz\Mainframe\MainframeClient;
 use Illuminate\Console\Command;
 use Abraham\TwitterOAuth\TwitterOAuth;
+use App\Jobs\GetHashtags;
+use App\Jobs\GetLimits;
+use App\Jobs\GetMyMentions;
+use App\Jobs\GetUserTimeline;
+use App\Jobs\GetMyTimeline;
+use Illuminate\Support\Facades\Queue;
+use Laravel\Lumen\Routing\ProvidesConvenienceMethods;
 
 class TwitterSearch extends Command
 {
+    use ProvidesConvenienceMethods;
 
     /**
      * The name and signature of the console command.
@@ -49,39 +58,26 @@ class TwitterSearch extends Command
         $users = User::with('subscriptions.conversation')->get();
 
         foreach($users as $user){
+
+            //Refresh rate limit
+
             foreach($user->subscriptions as $subscription){
 
+                if($subscription->hashtags != ''){
+                    $this->dispatch(new GetHashtags(
+                        $subscription->conversation,
+                        $subscription,
+                        $user,
+                        $subscription->hashtags
+                    ));
+                }
+                if($subscription->people != ''){
+
+                }
                 $conversationID = $subscription->conversation->mainframe_conversation_id;
                 $this->info($conversationID);
             }
         }
-
-
-        //Hashtags
-        /*$response = $this->twitterConnection->get("search/tweets", [
-            "q"             => urlencode("#geneve OR #brest"),
-            "result_type"   => "recent",
-            "count"         => 50
-        ]);*/
-
-        // Get tweets to you attention
-        /*$response = $this->twitterConnection->get("search/tweets", [
-            "q"             => urlencode("@aubruz"),
-            "result_type"   => "recent"
-        ]);*/
-
-        //Get user's personal timeline
-        //$response = $this->twitterConnection->get("statuses/home_timeline");
-
-        //Get a user tweets
-        /*$response = $this->twitterConnection->get("statuses/user_timeline",[
-            "screen_name" => "sjtagg89"
-        ]);*/
-
-        //Get limits
-        /*$response = $this->twitterConnection->get("application/rate_limit_status",[
-            "resources" => "search,statuses,application"
-        ]);*/
 
         // $response = $this->twitterConnection->post("account_activity/webhooks", ["url" => urlencode("https://b52d9030.ngrok.io/webhook/twitter")]);
         //return $this->respond($response);
