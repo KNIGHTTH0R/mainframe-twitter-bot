@@ -343,6 +343,11 @@ class BotController extends ApiController
         return $this->respond($this->botResponse->toArray());
     }
 
+    /**
+     * @param User $user
+     * @return string
+     * @throws \Abraham\TwitterOAuth\TwitterOAuthException
+     */
     private function getTwitterAuthUrl(User $user)
     {
         $requestToken = $this->twitterConnection->oauth("oauth/request_token", ["oauth_callback" => env("TWITTER_OAUTH_CALLBACK")]);
