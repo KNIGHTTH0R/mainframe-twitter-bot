@@ -32,6 +32,10 @@ class TwitterController extends ApiController
 
     public function requestToken(Request $request)
     {
+        if($request->has("denied")){
+            return redirect("https://mainframe.com/bots/auth/?state=cancel&name=Twitter%20Bot&logo_url=http://www.clipartbest.com/cliparts/ecM/kgb/ecMkgbB5i.png");
+        }
+
         if(!$request->has('oauth_verifier') || !$request->has('oauth_token')) {
             return $this->respondBadRequest();
         }
@@ -44,7 +48,10 @@ class TwitterController extends ApiController
         ]);
 
         $user = User::where("twitter_oauth_request_token", $oauthToken)->first();
-        //TODO handle case where user is not found
+
+        if(!$user){
+            return redirect("https://mainframe.com/bots/auth/?state=error&name=Twitter%20Bot&logo_url=http://www.clipartbest.com/cliparts/ecM/kgb/ecMkgbB5i.png");
+        }
 
         $user->twitter_oauth_token = $access_token["oauth_token"];
         $user->twitter_oauth_token_secret = $access_token["oauth_token_secret"];
@@ -52,9 +59,7 @@ class TwitterController extends ApiController
         $user->twitter_screen_name = $access_token["screen_name"];
         $user->save();
 
-        //TODO Use view to invite user to go back to the app
-        return $access_token;
-
+        return redirect("https://mainframe.com/bots/auth/?state=success&name=Twitter%20Bot&logo_url=http://www.clipartbest.com/cliparts/ecM/kgb/ecMkgbB5i.png");
     }
 
     public function webhook()
