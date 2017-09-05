@@ -24,14 +24,18 @@ class Tweet
      * @param $screenName
      * @param $text
      * @param $avatar
+     * @param $images
      */
-    public function __construct($userName, $screenName, $text, $avatar, $photo = null)
+    public function __construct($userName, $screenName, $text, $avatar, $images = [])
     {
         $message = new Message();
         $message->addChildren((new Author($userName, '@'.$screenName ))->addAvatarUrl($avatar)->isCircle());
         $message->addChildren((new Text())->addChildren($text));
-        if($photo){
-            $message->addChildren((new Image($photo, 200, 200))->allowOpenFullImage());
+
+        if($images){
+            foreach($images as $image){
+                $message->addChildren((new Image($image["url"], $image["height"], $image["width"]))->allowOpenFullImage());
+            }
         }
 
         $this->uiPayload = new UIPayload();
