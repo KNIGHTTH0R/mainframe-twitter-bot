@@ -3,10 +3,10 @@
 namespace App\Jobs;
 
 use Abraham\TwitterOAuth\TwitterOAuth;
-use App\Models\User;
+use App\Libraries\Tweet;
 use Aubruz\Mainframe\MainframeClient;
 
-class GetUserTimeline extends Job
+class GetUserTimeline extends TwitterJob
 {
 
     /**
@@ -27,6 +27,13 @@ class GetUserTimeline extends Job
      */
     public function handle()
     {
+        if($this->user->twitter_user_timeline_limit < 2){
+            return;
+        }
+
+        $this->user->twitter_user_timeline_limit = $this->user->twitter_user_timeline_limit -1;
+        $this->user->save();
+
         $this->mainframeClient = new MainframeClient(env('BOT_SECRET'), env('MAINFRAME_API_URL'));
         $this->twitterConnection    = new TwitterOAuth(
             env("TWITTER_API_KEY"),
@@ -35,9 +42,49 @@ class GetUserTimeline extends Job
             $this->user->twitter_oauth_token_secret
         );
 
-        $response = $this->twitterConnection->get("statuses/user_timeline",[
-            "screen_name" => "sjtagg89"
-        ]);
+        $peopleArray = explode(',', $this->subscription->people);
+
+        foreach($peopleArray as $people) {
+            $tweets = $this->twitterConnection->get("statuses/user_timeline", [
+                "screen_name"   => str_replace('@', '',$people),
+                "count"         => 10,
+                "tweet_mode"    => "extended",
+                "since_id"      => $this->subscription->people_since_id
+            ]);
+
+            $firstTweet = true;
+
+            foreach($tweets as $tweet) {
+
+
+                $images = [];
+                if(property_exists($tweet, "entities") && property_exists($tweet->entities, "media")){
+                    foreach($tweet->entities->media as $media){
+                        array_push($images, [
+                            "url"       => $media->media_url_https,
+                            "width"     => $media->sizes->small->w,
+                            "height"    => $media->sizes->small->h,
+                        ]);
+                    }
+                }
+                $tweetUI = new Tweet(
+                    $tweet->user->name,
+                    $tweet->user->screen_name,
+                    $tweet->full_text,
+                    $tweet->user->profile_image_url_https,
+                    $images
+                );
+
+                if ($firstTweet) {
+                    $this->subscription->people_since_id = $tweet->id_str;
+                    $this->subscription->save();
+                }
+
+                $resp = $this->mainframeClient->sendMessage($this->conversation->mainframe_conversation_id, $tweetUI->getUIPayload(), $this->subscription->mainframe_subscription_id);
+
+                $firstTweet = false;
+            }
+        }
 
     }
 }

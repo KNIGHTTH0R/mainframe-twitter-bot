@@ -5,33 +5,19 @@ namespace App\Jobs;
 use Abraham\TwitterOAuth\TwitterOAuth;
 use App\Libraries\Tweet;
 use Aubruz\Mainframe\MainframeClient;
-use Aubruz\Mainframe\Response\BotResponse;
-use Aubruz\Mainframe\Response\EmbedData;
-use Aubruz\Mainframe\Response\UIPayload;
-use Aubruz\Mainframe\UI\Components\Author;
-use Aubruz\Mainframe\UI\Components\Message;
-use Aubruz\Mainframe\UI\Components\Text;
 
-class GetHashtags extends Job
+class GetHashtags extends TwitterJob
 {
-    /**
-     * @var string
-     */
-    private $hashtags;
-
 
     /**
      * GetHashtags constructor.
      * @param $conversation
      * @param $subscription
      * @param $user
-     * @param $hashtags
      */
-    public function __construct($conversation, $subscription, $user, $hashtags)
+    public function __construct($conversation, $subscription, $user)
     {
         parent::__construct($conversation, $subscription, $user);
-        $this->hashtags = $hashtags;
-        //
     }
 
     /**
@@ -41,6 +27,13 @@ class GetHashtags extends Job
      */
     public function handle()
     {
+        if($this->user->twitter_search_limit < 2){
+            return;
+        }
+
+        $this->user->twitter_search_limit = $this->user->twitter_search_limit -1;
+        $this->user->save();
+
         $this->mainframeClient      = new MainframeClient(env('BOT_SECRET'), env('MAINFRAME_API_URL'));
         $this->twitterConnection    = new TwitterOAuth(
                                             env("TWITTER_API_KEY"),
@@ -49,31 +42,44 @@ class GetHashtags extends Job
                                             $this->user->twitter_oauth_token_secret
                                         );
 
-
-        $response = $this->twitterConnection->get("search/tweets", [
-            "q"             => "#TabloidCover -filter:retweets AND -filter:replies",
+        $hashtags = str_replace(',', ' OR ', $this->subscription->hashtags);
+        $tweets = $this->twitterConnection->get("search/tweets", [
+            "q"             => $hashtags . " -filter:retweets AND -filter:replies",
             "result_type"   => "recent",
-            "count"         => 2
+            "count"         => 10,
+            "tweet_mode"    => "extended",
+            "since_id"      => $this->subscription->hashtags_since_id
         ]);
 
-        foreach($response->statuses as $tweet){
+        $firstTweet = true;
+        foreach($tweets->statuses as $tweet){
 
-            //dd($tweet);
-            $image = null;
-            if(property_exists($tweet, "media")){
-                $image = $tweet->media[0]->media_url_https;
+            $images = [];
+            if(property_exists($tweet, "entities") && property_exists($tweet->entities, "media")){
+                foreach($tweet->entities->media as $media){
+                    array_push($images, [
+                        "url"       => $media->media_url_https,
+                        "width"     => $media->sizes->small->w,
+                        "height"    => $media->sizes->small->h,
+                    ]);
+                }
             }
             $tweetUI = new Tweet(
                 $tweet->user->name,
                 $tweet->user->screen_name,
-                $tweet->text,
+                $tweet->full_text,
                 $tweet->user->profile_image_url_https,
-                $image
+                $images
             );
-           // $tweet->id_str;
+
+            if($firstTweet){
+                $this->subscription->hashtags_since_id = $tweet->id_str;
+                $this->subscription->save();
+            }
 
             $resp = $this->mainframeClient->sendMessage($this->conversation->mainframe_conversation_id, $tweetUI->getUIPayload(), $this->subscription->mainframe_subscription_id);
-            //d($response);
+
+            $firstTweet = false;
         }
 
     }
