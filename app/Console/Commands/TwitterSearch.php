@@ -2,10 +2,8 @@
 
 namespace App\Console\Commands;
 
-use App\Models\User;
-use Aubruz\Mainframe\MainframeClient;
 use Illuminate\Console\Command;
-use Abraham\TwitterOAuth\TwitterOAuth;
+use App\Models\User;
 use App\Jobs\GetHashtags;
 use App\Jobs\GetLimits;
 use App\Jobs\GetMyMentions;
@@ -26,11 +24,6 @@ class TwitterSearch extends Command
     protected $signature = 'twitter:search';
 
     /**
-     * @var TwitterOAuth
-     */
-    protected $twitterConnection;
-
-    /**
      * The console command description.
      *
      * @var string
@@ -45,7 +38,6 @@ class TwitterSearch extends Command
     public function __construct()
     {
         parent::__construct();
-        $this->twitterConnection = new TwitterOAuth(env("TWITTER_API_KEY"), env("TWITTER_API_SECRET"), '2922900753-SlhkdaxJwkMhmPNhDPQ76xPxgeSYX99xcu9GRg6', '4xVVm8isaeVhvTB5wLEwiOUUwyBeSE7AYEoUiIsXs0FDo');
     }
 
     /**
@@ -59,29 +51,57 @@ class TwitterSearch extends Command
 
         foreach($users as $user){
 
-            //Refresh rate limit
+            $callToMyMention = false;
+            $callToMyTimeline = false;
+
+            // Refresh rate limits
+            $this->dispatch(new GetLimits($user));
 
             foreach($user->subscriptions as $subscription){
 
+                // Get hashtags
                 if($subscription->hashtags != ''){
                     $this->dispatch(new GetHashtags(
                         $subscription->conversation,
                         $subscription,
-                        $user,
-                        $subscription->hashtags
+                        $user
                     ));
                 }
-                if($subscription->people != ''){
 
+                // Get other users timeline
+                if($subscription->people != ''){
+                    $this->dispatch(new GetUserTimeline(
+                        $subscription->conversation,
+                        $subscription,
+                        $user
+                    ));
                 }
-                $conversationID = $subscription->conversation->mainframe_conversation_id;
-                $this->info($conversationID);
+
+                // Get tweets that mention the user's name
+                if($subscription->get_my_mention && !$callToMyMention){
+                    $this->dispatch(new GetMyMentions(
+                        $subscription->conversation,
+                        $subscription,
+                        $user
+                    ));
+                    $callToMyMention = true;
+                }
+
+                // Get tweets from the user's timeline
+                if($subscription->get_my_timeline && !$callToMyTimeline){
+                    $this->dispatch(new GetMyTimeline(
+                        $subscription->conversation,
+                        $subscription,
+                        $user
+                    ));
+                    $callToMyTimeline = true;
+                }
+
             }
         }
+        $this->info("Job done!");
 
+        // ACCOUNT ACTIVITY API - Register webhook
         // $response = $this->twitterConnection->post("account_activity/webhooks", ["url" => urlencode("https://b52d9030.ngrok.io/webhook/twitter")]);
-        //return $this->respond($response);
-
-       // dd($response);
     }
 }
