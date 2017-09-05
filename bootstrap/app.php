@@ -112,4 +112,8 @@ if (!class_exists('TwitterStreamingApi')) {
 }
 $app->withFacades(true, ['Spatie\LaravelTwitterStreamingApi\TwitterStreamingApiFacade' => 'TwitterStreamingApi']);
 
+// Add Redis support
+$app->register(Illuminate\Redis\RedisServiceProvider::class);
+$app->configure('database');
+
 return $app;
