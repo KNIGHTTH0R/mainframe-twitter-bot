@@ -25,7 +25,7 @@ $app = new Laravel\Lumen\Application(
 
 // $app->withFacades();
 
-// $app->withEloquent();
+$app->withEloquent();
 
 /*
 |--------------------------------------------------------------------------
@@ -102,18 +102,18 @@ $app->configure('app');
 $app->configure('laravel-twitter-streaming-api');
 // Add Tinker
 $app->register(Laravel\Tinker\TinkerServiceProvider::class);
-// Add Eloquent
-$app->withEloquent();
+
 
 // Add twitter stream provider and alias
-$app->register(Spatie\LaravelTwitterStreamingApi\TwitterStreamingApiServiceProvider::class);
+/*$app->register(Spatie\LaravelTwitterStreamingApi\TwitterStreamingApiServiceProvider::class);
 if (!class_exists('TwitterStreamingApi')) {
-    //class_alias('Spatie\LaravelTwitterStreamingApi\TwitterStreamingApiFacade::class', 'TwitterStreamingApi');
+    class_alias('Spatie\LaravelTwitterStreamingApi\TwitterStreamingApiFacade::class', 'TwitterStreamingApi');
 }
 $app->withFacades(true, ['Spatie\LaravelTwitterStreamingApi\TwitterStreamingApiFacade' => 'TwitterStreamingApi']);
+*/
 
 // Add Redis support
 $app->register(Illuminate\Redis\RedisServiceProvider::class);
-$app->configure('database');
+//$app->configure('database');
 
 return $app;
