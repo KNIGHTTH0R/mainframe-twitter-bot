@@ -9,7 +9,6 @@ use App\Jobs\GetLimits;
 use App\Jobs\GetMyMentions;
 use App\Jobs\GetUserTimeline;
 use App\Jobs\GetMyTimeline;
-use Illuminate\Support\Facades\Queue;
 use Laravel\Lumen\Routing\ProvidesConvenienceMethods;
 
 class TwitterSearch extends Command

@@ -14,7 +14,8 @@ class Kernel extends ConsoleKernel
      */
     protected $commands = [
         Commands\TwitterPublicStream::class,
-        Commands\TwitterSearch::class
+        Commands\TwitterSearch::class,
+        Commands\RunScheduler::class
     ];
 
     /**
