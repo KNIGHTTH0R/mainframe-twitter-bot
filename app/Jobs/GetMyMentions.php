@@ -73,7 +73,7 @@ class GetMyMentions extends TwitterJob
             $tweetUI = new Tweet(
                 $tweet->user->name,
                 $tweet->user->screen_name,
-                str_replace('&amp;', '&', $tweet->full_text),
+                htmlspecialchars_decode($tweet->full_text),
                 $tweet->user->profile_image_url_https,
                 $images
             );
