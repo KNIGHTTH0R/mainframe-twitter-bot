@@ -52,6 +52,10 @@ class GetMyTimeline extends TwitterJob
             "since_id"      => $this->subscription->timeline_since_id
         ]);
 
+        if ($this->twitterConnection->getLastHttpCode() != 200){
+            return;
+        }
+
         $firstTweet = true;
         foreach($tweets as $tweet){
 

@@ -53,6 +53,10 @@ class GetMyMentions extends TwitterJob
             "since_id"      => $this->subscription->mention_since_id
         ]);
 
+        if ($this->twitterConnection->getLastHttpCode() != 200){
+            return;
+        }
+
         $firstTweet = true;
         foreach($tweets->statuses as $tweet){
 

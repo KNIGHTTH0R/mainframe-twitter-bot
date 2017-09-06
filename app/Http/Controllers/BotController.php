@@ -69,7 +69,7 @@ class BotController extends ApiController
         if(!$conversationID || !$mainframeUserID){
             $this->respondBadRequest();
         }
-        $this->mainframeClient->sendMessage($conversationID, 'Hello World!!');
+        $this->mainframeClient->sendMessage($conversationID, 'Hi!');
 
         //Save the new conversation
         $conversation = new Conversation();
@@ -194,6 +194,7 @@ class BotController extends ApiController
         $subscriptionToken = $request->input('context.subscription_token');
         $mainframeSubscriptionID = $request->input('context.subscription_id');
 
+        // Retrieve user
         $user = User::where('mainframe_user_id', $mainframeUserID)->first();
         if(!$user){
             $user = new User();
@@ -300,10 +301,6 @@ class BotController extends ApiController
                     $this->botResponse->addData((new AuthenticationData($url))->addPayload(["type" => "authentication_success"]));
                     return $this->respond($this->botResponse->toArray());
                 }
-                break;
-            case 'edit':
-
-
                 break;
         }
         $form = (new Form())

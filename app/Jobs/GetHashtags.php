@@ -51,6 +51,10 @@ class GetHashtags extends TwitterJob
             "since_id"      => $this->subscription->hashtags_since_id
         ]);
 
+        if ($this->twitterConnection->getLastHttpCode() != 200){
+            return;
+        }
+
         $firstTweet = true;
         foreach($tweets->statuses as $tweet){
 
@@ -77,7 +81,7 @@ class GetHashtags extends TwitterJob
                 $this->subscription->save();
             }
 
-            $resp = $this->mainframeClient->sendMessage($this->conversation->mainframe_conversation_id, $tweetUI->getUIPayload(), $this->subscription->mainframe_subscription_id);
+            $this->mainframeClient->sendMessage($this->conversation->mainframe_conversation_id, $tweetUI->getUIPayload(), $this->subscription->mainframe_subscription_id);
 
             $firstTweet = false;
         }
