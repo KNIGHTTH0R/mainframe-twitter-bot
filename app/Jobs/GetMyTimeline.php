@@ -72,7 +72,7 @@ class GetMyTimeline extends TwitterJob
             $tweetUI = new Tweet(
                 $tweet->user->name,
                 $tweet->user->screen_name,
-                $tweet->full_text,
+                str_replace('&amp;', '&', $tweet->full_text),
                 $tweet->user->profile_image_url_https,
                 $images
             );
