@@ -6,7 +6,7 @@ use Aubruz\Mainframe\UI\Components\Image;
 use \Aubruz\Mainframe\UI\Components\Message;
 use \Aubruz\Mainframe\UI\Components\Author;
 use \Aubruz\Mainframe\UI\Components\Text;
-use Aubruz\Mainframe\Response\UIPayload;
+use Aubruz\Mainframe\Responses\UIPayload;
 
 /**
  * Class Tweet

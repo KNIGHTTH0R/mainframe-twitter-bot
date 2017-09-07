@@ -6,10 +6,11 @@ use App\Models\Conversation;
 use App\Models\Subscription;
 use App\Models\User;
 use Aubruz\Mainframe\MainframeClient;
-use Aubruz\Mainframe\Response\AuthenticationData;
-use Aubruz\Mainframe\Response\BotResponse;
-use Aubruz\Mainframe\Response\ModalData;
-use Aubruz\Mainframe\Response\UIPayload;
+use Aubruz\Mainframe\Responses\AuthenticationData;
+use Aubruz\Mainframe\Responses\BotResponse;
+use Aubruz\Mainframe\Responses\ModalData;
+use Aubruz\Mainframe\Responses\UIPayload;
+use Aubruz\Mainframe\UI\Components\ModalButton;
 use Aubruz\Mainframe\UI\Components\MultiSelect;
 use Aubruz\Mainframe\UI\Components\RadioButtonSelect;
 use Aubruz\Mainframe\UI\Components\TextInput;
@@ -279,8 +280,8 @@ class BotController extends ApiController
 
                 $this->botResponse->addData((new ModalData('Are you sure?'))
                     ->setUI((new UIPayload())
-                        ->addButton((new Button("OK"))->setPayload(["type"=>"safe_signout"])->setType("form_post"))
-                        ->addButton((new Button("Cancel"))->setStyle("close_modal"))
+                        ->addButton((new ModalButton("OK"))->setPayload(["type"=>"safe_signout"])->setType("form_post")->setStyle("primary"))
+                        ->addButton((new ModalButton("Cancel"))->setStyle("close_modal")->setType("post_payload"))
                         ->setRender($form)
                     )
                 );
@@ -331,8 +332,8 @@ class BotController extends ApiController
 
         $this->botResponse->addData((new ModalData('Choose you subscription'))
             ->setUI((new UIPayload())
-                ->addButton((new Button("Save"))->setPayload(["type"=>"save"])->setType("form_post"))
-                ->addButton((new Button("Signout"))->setPayload(["type"=>"signout"])->setStyle("secondary"))
+                ->addButton((new ModalButton("Save"))->setPayload(["type"=>"save"])->setType("form_post")->setStyle("primary"))
+                ->addButton((new ModalButton("Signout"))->setPayload(["type"=>"signout"])->setStyle("secondary")->setType("post_payload"))
                 ->setRender($form)
             )
         );
