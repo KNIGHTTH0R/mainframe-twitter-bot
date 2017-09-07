@@ -313,8 +313,15 @@ class BotController extends ApiController
 
         if(($requestType === 'edit' || $requestType === 'safe_signout') && $subscriptionExists) {
             $subscription = Subscription::where('mainframe_subscription_id', $mainframeSubscriptionID)->first();
-            $form->addData("hashtags", $subscription->hashtags)
-                ->addData("people", $subscription->people);
+            if(!$subscription){
+                return $this->respond($this->botResponse->setSuccess(false)->toArray());
+            }
+            if($subscription->hashtags != '') {
+                $form->addData("hashtags", $subscription->hashtags);
+            }
+            if($subscription->people != '') {
+                $form->addData("people", $subscription->people);
+            }
             $userAccount = [];
             if($subscription->get_my_timeline){
                 array_push($userAccount, "timeline");
