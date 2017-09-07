@@ -322,8 +322,10 @@ class BotController extends ApiController
             if($subscription->get_my_mention){
                 array_push($userAccount, "mention");
             }
-            
-            $form->addData("user_account", $userAccount);
+
+            if(count($userAccount) > 0) {
+               $form->addData("user_account", $userAccount);
+            }
         }else {
             $form->addData("hashtags", "#mainframe,#productivity")
                 ->addData("people", "@MainframeApp");
