@@ -5,6 +5,7 @@ namespace App\Libraries;
 use Aubruz\Mainframe\UI\Components\Image;
 use \Aubruz\Mainframe\UI\Components\Message;
 use \Aubruz\Mainframe\UI\Components\Author;
+use Aubruz\Mainframe\UI\Components\MessageButton;
 use \Aubruz\Mainframe\UI\Components\Text;
 use Aubruz\Mainframe\Responses\UIPayload;
 use Aubruz\Mainframe\UI\Components\TextLink;
@@ -32,7 +33,7 @@ class Tweet
      * @param $avatar
      * @param $images
      */
-    public function __construct($userName, $screenName, $text, $avatar, $images = [])
+    public function __construct($tweetID, $tweetUrl, $userName, $screenName, $text, $avatar, $images = [])
     {
         $message = new Message();
         $message->addChildren((new Author($userName, '@'.$screenName ))->addAvatarUrl($avatar)->isCircle());
@@ -44,8 +45,27 @@ class Tweet
             }
         }
 
+        $likeButton =(new MessageButton("Like"))->setType("post_payload")->setPayload([
+            "type"      => "like",
+            "tweet_id"  => $tweetID
+        ]);
+
+        $replyButton =(new MessageButton("Reply"))->setType("open_modal")->setPayload([
+            "type"          => "get_reply_form",
+            "tweet_id"      => $tweetID,
+            "tweet_author"  => '@'.$screenName
+        ]);
+
+        $retweetButton =(new MessageButton("Retweet"))->setType("open_modal")->setPayload([
+            "type"      => "get_retweet_form",
+            "tweet_id"  => $tweetID,
+            "tweet_url" => $tweetUrl
+        ]);
+
         $this->uiPayload = new UIPayload();
-        $this->uiPayload->setRender($message);
+        $this->uiPayload->setRender($message)->addButton($replyButton);
+        $this->uiPayload->setRender($message)->addButton($retweetButton);
+        $this->uiPayload->setRender($message)->addButton($likeButton);
     }
 
     /**
