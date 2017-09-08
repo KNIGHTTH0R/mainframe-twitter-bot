@@ -11,6 +11,7 @@ use Aubruz\Mainframe\Responses\BotResponse;
 use Aubruz\Mainframe\Responses\ModalData;
 use Aubruz\Mainframe\Responses\UIPayload;
 use Aubruz\Mainframe\UI\Components\ModalButton;
+use Aubruz\Mainframe\UI\Components\MultiLineInput;
 use Aubruz\Mainframe\UI\Components\MultiSelect;
 use Aubruz\Mainframe\UI\Components\RadioButtonSelect;
 use Aubruz\Mainframe\UI\Components\TextInput;
@@ -209,6 +210,9 @@ class BotController extends ApiController
             return $this->respond($this->botResponse->toArray());
         }
 
+        // To make twitter api calls in the behalf of the user
+        $this->twitterConnection->setOauthToken($user->twitter_oauth_token, $user->twitter_oauth_token_secret);
+
         switch($requestType){
             case 'save':
 
@@ -270,8 +274,6 @@ class BotController extends ApiController
                 $this->botResponse->addMessage("An error occured, please try again or restart the process.");
                 $this->botResponse->setSuccess(false);
                 return $this->respond($this->botResponse->toArray());
-
-                break;
             case 'signout':
                 $form = (new Form())->addChildren((new RadioButtonSelect('confirm', ''))
                     ->addOptions(['ok' => 'I understand', 'not_ok' => 'Never mind']))
@@ -287,7 +289,6 @@ class BotController extends ApiController
                 $this->botResponse->addMessage("If you signout all your subscriptions will be erased!");
                 $this->botResponse->setSuccess(false);
                 return $this->respond($this->botResponse->toArray());
-                break;
             case 'safe_signout':
 
                 if($request->has('data.form.confirm') && $request->input('data.form.confirm') === 'ok') {
@@ -301,6 +302,79 @@ class BotController extends ApiController
                     $this->botResponse->addData((new AuthenticationData($url))->addPayload(["type" => "authentication_success"]));
                     return $this->respond($this->botResponse->toArray());
                 }
+                break;
+            case 'get_reply_form':
+                if($request->has('data.tweet_id') && $request->has('data.tweet_author')) {
+                    $form = new Form();
+                    $form->addChildren((new MultiLineInput('reply_text','Reply')));
+                    $this->botResponse->addData((new ModalData('Reply to '.$request->input('data.tweet_author')))
+                        ->setUI((new UIPayload())
+                            ->addButton((new ModalButton("Send reply"))->setPayload(["type"=>"reply"])->setType("form_post")->setStyle("primary"))
+                            ->addButton((new ModalButton("Cancel"))->setStyle("secondary")->setType("close_modal"))
+                            ->setRender($form)
+                        )
+                    );
+                } else{
+                    $this->botResponse->setSuccess(false);
+                }
+                return $this->respond($this->botResponse->toArray());
+            case 'reply':
+                if($request->has('data.tweet_id') && $request->has('data.tweet_author') && $request->has('data.form.reply_text')) {
+                   $this->twitterConnection->post("statuses/update", [
+                        "in_reply_to_status_id" => $request->input('data.tweet_id'),
+                        "status" => $request->input('data.form.reply_text')
+                    ]);
+
+                }else{
+                    $this->botResponse->setSuccess(false);
+                }
+                return $this->respond($this->botResponse->toArray());
+            case 'get_retweet_form':
+                if($request->has('data.tweet_id')) {
+                    $form = new Form();
+                    $form->addChildren((new MultiLineInput('retweet_text','Add a comment')));
+                    $this->botResponse->addData((new ModalData('Retweet'))
+                        ->setUI((new UIPayload())
+                            ->addButton((new ModalButton("Retweet"))->setPayload(["type"=>"retweet"])->setType("form_post")->setStyle("primary"))
+                            ->addButton((new ModalButton("Cancel"))->setStyle("secondary")->setType("close_modal"))
+                            ->setRender($form)
+                        )
+                    );
+                } else{
+                    $this->botResponse->setSuccess(false);
+                }
+                return $this->respond($this->botResponse->toArray());
+            case 'retweet':
+                if($request->has('data.tweet_id') && $request->has('data.tweet_url')) {
+
+                    if($request->has('data.form.retweet_text') && $request->input('data.form.retweet_text') != ''){
+                        if(strlen($request->input('data.form.retweet_text')) > 140){
+                            $this->botResponse->setSuccess(false);
+                            $this->botResponse->addMessage("Your tweet exceeds 140 characters!");
+                        }else {
+                            //Retweet with quote
+                            /*$this->twitterConnection->post("statuses/update", [
+                                "in_reply_to_status_id" => $request->input('data.tweet_id'),
+                                "status" => $request->input('data.form.retweet_text')
+                            ]);*/
+                        }
+                    }else{
+                        //Simple retweet
+                        $this->twitterConnection->post("statuses/retweet/".$request->has('data.tweet_id'), [
+                            "id" => $request->input('data.tweet_id')
+                        ]);
+                    }
+                }else{
+                    $this->botResponse->setSuccess(false);
+                }
+                return $this->respond($this->botResponse->toArray());
+            case 'like':
+                if($request->has('data.tweet_id')) {
+                    $this->twitterConnection->post("favorites/create", ["id" => $request->input('data.tweet_id')]);
+                }else{
+                    $this->botResponse->setSuccess(false);
+                }
+                return $this->respond($this->botResponse->toArray());
                 break;
         }
         $form = (new Form())
