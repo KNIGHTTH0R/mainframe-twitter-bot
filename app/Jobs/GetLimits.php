@@ -40,7 +40,7 @@ class GetLimits extends Job
         );
 
         $response = $twitterConnection->get("application/rate_limit_status",[
-            "resources" => "search,statuses,application"
+            "resources" => "search,statuses,application,lists"
         ]);
 
         if ($twitterConnection->getLastHttpCode() != 200){
