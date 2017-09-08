@@ -44,6 +44,7 @@ class GetLimits extends Job
         ]);
 
         if ($twitterConnection->getLastHttpCode() != 200){
+            $this->delete();
             return;
         }
 

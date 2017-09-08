@@ -31,6 +31,7 @@ class GetMyMentions extends TwitterJob
     public function handle()
     {
         if($this->user->twitter_search_limit < 2){
+            $this->delete();
             return;
         }
 
@@ -54,6 +55,7 @@ class GetMyMentions extends TwitterJob
         ]);
 
         if ($this->twitterConnection->getLastHttpCode() != 200){
+            $this->delete();
             return;
         }
 

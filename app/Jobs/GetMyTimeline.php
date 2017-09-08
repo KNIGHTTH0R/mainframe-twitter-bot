@@ -32,6 +32,7 @@ class GetMyTimeline extends TwitterJob
     {
 
         if($this->user->twitter_home_timeline_limit < 2){
+            $this->delete();
             return;
         }
 
@@ -53,6 +54,7 @@ class GetMyTimeline extends TwitterJob
         ]);
 
         if ($this->twitterConnection->getLastHttpCode() != 200){
+            $this->delete();
             return;
         }
 
