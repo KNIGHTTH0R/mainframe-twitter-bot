@@ -16,6 +16,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property string $twitter_slug
  * @property string $twitter_name
  * @property string $twitter_list_since_id
+ * @property integer $user_id
  * @property-read Collection|Subscription[] $subscriptions
  * @property-read User $user
  */

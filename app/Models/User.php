@@ -27,6 +27,7 @@ use Illuminate\Contracts\Auth\Access\Authorizable as AuthorizableContract;
  * @property integer $twitter_show_list_limit
  * @property integer $twitter_limits_limit
  * @property-read Collection|Subscription[] $subscriptions
+ * @property-read Collection|TwitterList[] $twitterLists
  */
 class User extends Model implements AuthenticatableContract, AuthorizableContract
 {
@@ -54,6 +55,14 @@ class User extends Model implements AuthenticatableContract, AuthorizableContrac
     public function subscriptions()
     {
         return $this->hasMany('App\Models\Subscription');
+    }
+
+    /**
+     * @return HasMany
+     */
+    public function twitterLists()
+    {
+        return $this->hasMany('App\Models\TwitterList');
     }
 
     public function resetTwitterData(){

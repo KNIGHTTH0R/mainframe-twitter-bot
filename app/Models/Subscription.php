@@ -13,7 +13,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property string $user_id
  * @property string $mainframe_subscription_id
  * @property string $label
- * @property string $hashtags
+ * @property string $search
  * @property string $people
  * @property string $hashtags_since_id
  * @property string $people_since_id
@@ -21,6 +21,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property string $timeline_since_id
  * @property boolean $get_my_timeline
  * @property boolean $get_my_mention
+ * @property boolean $get_people_retweets
+ * @property boolean $get_people_replies
  * @property-read User $user
  * @property-read Conversation $conversation
  * @property-read TwitterList $list
