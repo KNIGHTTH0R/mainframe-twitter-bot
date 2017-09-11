@@ -6,11 +6,11 @@ use Abraham\TwitterOAuth\TwitterOAuth;
 use App\Libraries\Tweet;
 use Aubruz\Mainframe\MainframeClient;
 
-class GetHashtags extends TwitterJob
+class GetSearch extends TwitterJob
 {
 
     /**
-     * GetHashtags constructor.
+     * GetSearch constructor.
      * @param $conversation
      * @param $subscription
      * @param $user
@@ -43,7 +43,7 @@ class GetHashtags extends TwitterJob
                                             $this->user->twitter_oauth_token_secret
                                         );
 
-        $hashtags = str_replace(',', ' OR ', $this->subscription->hashtags);
+        $hashtags = str_replace(',', ' OR ', $this->subscription->search);
         $tweets = $this->twitterConnection->get("search/tweets", [
             "q"             => $hashtags . " -filter:retweets AND -filter:replies",
             "result_type"   => "recent",

@@ -27,14 +27,6 @@ class GetUserTimeline extends TwitterJob
      */
     public function handle()
     {
-        if($this->user->twitter_user_timeline_limit < 2){
-            $this->delete();
-            return;
-        }
-
-        $this->user->twitter_user_timeline_limit = $this->user->twitter_user_timeline_limit -1;
-        $this->user->save();
-
         $this->mainframeClient = new MainframeClient(env('BOT_SECRET'), env('MAINFRAME_API_URL'));
         $this->twitterConnection    = new TwitterOAuth(
             env("TWITTER_API_KEY"),
@@ -46,6 +38,15 @@ class GetUserTimeline extends TwitterJob
         $peopleArray = explode(',', $this->subscription->people);
 
         foreach($peopleArray as $people) {
+
+            if($this->user->twitter_user_timeline_limit < 2){
+                $this->delete();
+                return;
+            }
+
+            $this->user->twitter_user_timeline_limit = $this->user->twitter_user_timeline_limit -1;
+            $this->user->save();
+
             $tweets = $this->twitterConnection->get("statuses/user_timeline", [
                 "screen_name"   => str_replace('@', '',$people),
                 "count"         => 10,

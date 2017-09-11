@@ -54,11 +54,15 @@ class GetLimits extends Job
         $homeTimelineLimit = $limits->statuses->{"/statuses/home_timeline"}->remaining;
         $userTimelineLimit = $limits->statuses->{"/statuses/user_timeline"}->remaining;
         $searchLimit = $limits->search->{"/search/tweets"}->remaining;
+        $showListLimit = $limits->lists->{"/lists/show"}->remaining;
+        $getListsLimit = $limits->lists->{"/lists/list"}->remaining;
 
         $this->user->twitter_limits_limit = $limitsLimit;
         $this->user->twitter_home_timeline_limit = $homeTimelineLimit;
         $this->user->twitter_user_timeline_limit = $userTimelineLimit;
         $this->user->twitter_search_limit = $searchLimit;
+        $this->user->twitter_get_lists_limit = $getListsLimit;
+        $this->user->twitter_show_list_limit = $showListLimit;
         $this->user->save();
     }
 }
