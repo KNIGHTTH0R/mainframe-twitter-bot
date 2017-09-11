@@ -4,12 +4,18 @@ namespace App\Http\Controllers;
 
 use App\Models\Conversation;
 use App\Models\Subscription;
+use App\Models\TwitterList;
 use App\Models\User;
 use Aubruz\Mainframe\MainframeClient;
 use Aubruz\Mainframe\Responses\AuthenticationData;
 use Aubruz\Mainframe\Responses\BotResponse;
 use Aubruz\Mainframe\Responses\ModalData;
 use Aubruz\Mainframe\Responses\UIPayload;
+use Aubruz\Mainframe\UI\Components\CheckboxGroup;
+use Aubruz\Mainframe\UI\Components\CheckboxItem;
+use Aubruz\Mainframe\UI\Components\Dropdown;
+use Aubruz\Mainframe\UI\Components\ListComponent;
+use Aubruz\Mainframe\UI\Components\ListItem;
 use Aubruz\Mainframe\UI\Components\ModalButton;
 use Aubruz\Mainframe\UI\Components\MultiLineInput;
 use Aubruz\Mainframe\UI\Components\MultiSelect;
@@ -214,32 +220,89 @@ class BotController extends ApiController
         $this->twitterConnection->setOauthToken($user->twitter_oauth_token, $user->twitter_oauth_token_secret);
 
         switch($requestType){
+            case 'authentication_success':
+                // Get twitter lists of user
+                $lists = $this->twitterConnection->get("lists/list");
+
+                if ($this->twitterConnection->getLastHttpCode() != 200) {
+                    $this->botResponse->addMessage("A problem occured. Please retry or signout and signin again.");
+                    $this->botResponse->setSuccess(false);
+                    return $this->respond($this->botResponse->toArray());
+                }
+
+                foreach ($lists as $list) {
+                    $twitterList = new TwitterList();
+                    $twitterList->twitter_id = $list->id_str;
+                    $twitterList->twitter_name = $list->name;
+                    $twitterList->twitter_slug = $list->slug;
+                    $twitterList->user_id = $user->id;
+                    $twitterList->save();
+                }
+
+                break;
+            case 'reload_lists':
+                if($user->twitter_get_lists_limit > 1) {
+                    $lists = $this->twitterConnection->get("lists/list");
+                    if ($this->twitterConnection->getLastHttpCode() != 200) {
+                        $this->botResponse->addMessage("A problem occured. Please retry or signout and signin again.");
+                        $this->botResponse->setSuccess(false);
+                        return $this->respond($this->botResponse->toArray());
+                    }
+                    $listsInDB = Twitterlist::pluck('twitter_id')->all();
+
+                    //Synchronize lists
+                    foreach ($lists as $list) {
+                        if(!in_array($list->id_str , $listsInDB)){
+                            //Add the missing lists
+                            $twitterList = new TwitterList();
+                            $twitterList->twitter_id = $list->id_str;
+                            $twitterList->twitter_name = $list->name;
+                            $twitterList->twitter_slug = $list->slug;
+                            $twitterList->user_id = $user->id;
+                            $twitterList->save();
+                        }else{
+                            $key = array_search($list->id_str, $listsInDB);
+                            if($key !== false) {
+                                unset($listsInDB[$key]);
+                            }
+                        }
+                    }
+                    // Delete the lists that doesn't exist anymore
+                    foreach($listsInDB as $list){
+                        TwitterList::whereIn('twitter_id', $listsInDB)->delete();
+                    }
+                    $this->botResponse->addMessage("Lists updated successfully!");
+                }
+                break;
             case 'save':
 
                 // Get inputs
                 $people = $request->input('data.form.people', '');
-                $hashtags = $request->input('data.form.hashtags', '');
+                $search = $request->input('data.form.search', '');
                 $getMyMention = in_array('mention', $request->input('data.form.user_account', []));
                 $getMyTimeline = in_array('timeline', $request->input('data.form.user_account', []));
+                $getPeopleReplies = $request->input('data.form.get_people_replies', false);
+                $getPeopleRetweets = $request->input('data.form.get_people_retweets', false);
+                $listID = $request->input('data.form.lists', false);
 
                 //Verification of inputs
-                if($people === '' && $hashtags === '' && !$getMyMention && !$getMyTimeline) {
+                if($people === '' && $search === '' && !$getMyMention && !$getMyTimeline && !$list) {
                     $this->botResponse->addMessage("You must choose at least one element of subscription");
                     $this->botResponse->setSuccess(false);
                     return $this->respond($this->botResponse->toArray());
                 }
 
-                if(!self::inputCheck($people, '@') || !self::inputCheck($hashtags, '#')){
-                    $this->botResponse->addMessage("You must separate your inputs by a comma without space.");
+                if(!self::inputCheck($people, '@')){
+                    $this->botResponse->addMessage("Don't forget the @ in the people input!");
                     $this->botResponse->setSuccess(false);
                     return $this->respond($this->botResponse->toArray());
                 }
 
                 // Label creation
-                if($people == '' && $hashtags == ''){
+                if($people == '' && $search == ''){
                     $label = '@'.$user->twitter_screen_name;
                 }else {
-                    $label = implode(' ', explode(',', $people)) . ' ' . implode(' ', explode(',', $hashtags));
+                    $label = implode(' ', explode(',', $people)) . ' ' . implode(' ', explode(',', $search)). ' ';
                 }
 
                 // Edit or setup subscription with Mainframe
@@ -248,6 +311,7 @@ class BotController extends ApiController
                 }else {
                     $response = $this->mainframeClient->setupSubscription($subscriptionToken, $label);
                 }
+
                 $response = json_decode($response->getBody());
                 if($response->success){
                     //Create new subscription or edit
@@ -261,11 +325,17 @@ class BotController extends ApiController
                     }
 
                     $subscription->label = $label;
-                    $subscription->hashtags = $hashtags;
+                    $subscription->search = $search;
                     $subscription->people = $people;
                     $subscription->mainframe_subscription_id = $response->subscription_id;
                     $subscription->get_my_mention = $getMyMention;
                     $subscription->get_my_timeline = $getMyTimeline;
+                    $subscription->get_people_retweets = $getPeopleRetweets;
+                    $subscription->get_people_replies = $getPeopleReplies;
+                    $subscription->twitter_list_id = null;
+                    if($listID) {
+                        $subscription->twitter_list_id = $listID;
+                    }
 
                     $subscription->save();
                     return $this->respond($this->botResponse->toArray());
@@ -377,9 +447,25 @@ class BotController extends ApiController
                 return $this->respond($this->botResponse->toArray());
                 break;
         }
+
+        $twitterListDropdown = new Dropdown('lists', 'Lists');
+        if(count($user->twitterLists) > 0) {
+            $twitterListDropdown->setPlaceholder("Select a list");
+            foreach ($user->twitterLists as $list) {
+                $twitterListDropdown->addOptions([$list->id => $list->twitter_name]);
+            }
+        }else{
+            $twitterListDropdown->setPlaceholder("You have no list");
+        }
+
         $form = (new Form())
-            ->addChildren((new TextInput("hashtags", "Hashtags that you want to follow."))->setPrefix("#"))
+            ->addChildren((new TextInput("search", "Search: #hashtag, word, @username"))->setPrefix("Search"))
             ->addChildren((new TextInput("people", "People that you want to follow."))->setPrefix("@"))
+            ->addChildren((new CheckboxGroup(" "))
+                ->addChildren(new CheckboxItem("get_people_retweets", "Include retweets"))
+                ->addChildren(new CheckboxItem("get_people_replies", "Include replies"))
+            )
+            ->addChildren($twitterListDropdown)
             ->addChildren((new MultiSelect('user_account', 'My account'))
                 ->addOptions(["timeline" => "Get your timeline"])
                 ->addOptions(["mention" => "Get the tweets that mention your name"]));
@@ -389,8 +475,9 @@ class BotController extends ApiController
             if(!$subscription){
                 return $this->respond($this->botResponse->setSuccess(false)->toArray());
             }
-            if($subscription->hashtags != '') {
-                $form->addData("hashtags", $subscription->hashtags);
+            // Fill form with database data
+            if($subscription->search != '') {
+                $form->addData("search", $subscription->search);
             }
             if($subscription->people != '') {
                 $form->addData("people", $subscription->people);
@@ -402,12 +489,21 @@ class BotController extends ApiController
             if($subscription->get_my_mention){
                 array_push($userAccount, "mention");
             }
+            if($subscription->get_people_retweets != '') {
+                $form->addData("get_people_retweets", $subscription->get_people_retweets);
+            }
+            if($subscription->get_people_replies != '') {
+                $form->addData("get_people_replies", $subscription->get_people_replies);
+            }
+            if($subscription->list_id != null) {
+                $form->addData("lists", $subscription->list_id);
+            }
 
             if(count($userAccount) > 0) {
                $form->addData("user_account", $userAccount);
             }
         }else {
-            $form->addData("hashtags", "#mainframe,#productivity")
+            $form->addData("search", "#mainframe,landscape")
                 ->addData("people", "@MainframeApp");
         }
 
@@ -416,6 +512,7 @@ class BotController extends ApiController
             ->setUI((new UIPayload())
                 ->addButton((new ModalButton("Save"))->setPayload(["type"=>"save"])->setType("form_post")->setStyle("primary"))
                 ->addButton((new ModalButton("Signout"))->setPayload(["type"=>"signout"])->setStyle("secondary")->setType("post_payload"))
+                ->addButton((new ModalButton("Reload lists"))->setPayload(["type"=>"reload_lists"])->setStyle("secondary")->setType("post_payload"))
                 ->setRender($form)
             )
         );
