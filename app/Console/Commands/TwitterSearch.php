@@ -2,9 +2,10 @@
 
 namespace App\Console\Commands;
 
+use App\Jobs\GetList;
 use Illuminate\Console\Command;
 use App\Models\User;
-use App\Jobs\GetHashtags;
+use App\Jobs\GetSearch;
 use App\Jobs\GetLimits;
 use App\Jobs\GetMyMentions;
 use App\Jobs\GetUserTimeline;
@@ -46,21 +47,22 @@ class TwitterSearch extends Command
      */
     public function handle()
     {
-        $users = User::with('subscriptions.conversation')->get();
+        $users = User::with('subscriptions.conversation', 'twitterlists')->get();
 
         foreach($users as $user){
 
             $callToMyMention = false;
             $callToMyTimeline = false;
+            $callToGetLists = false;
 
             // Refresh rate limits
             $this->dispatch(new GetLimits($user));
 
             foreach($user->subscriptions as $subscription){
 
-                // Get hashtags
-                if($subscription->hashtags != ''){
-                    $this->dispatch(new GetHashtags(
+                // Get search
+                if($subscription->search != ''){
+                    $this->dispatch(new GetSearch(
                         $subscription->conversation,
                         $subscription,
                         $user
@@ -76,8 +78,18 @@ class TwitterSearch extends Command
                     ));
                 }
 
+                // Get lists
+                if(!$callToGetLists && $user->twitterlists){
+                    $this->dispatch(new GetList(
+                       $subscription->conversation,
+                        $subscription,
+                        $user
+                    ));
+                    $callToGetLists = true;
+                }
+
                 // Get tweets that mention the user's name
-                if($subscription->get_my_mention && !$callToMyMention){
+                if(!$callToMyMention && $subscription->get_my_mention){
                     $this->dispatch(new GetMyMentions(
                         $subscription->conversation,
                         $subscription,
@@ -87,7 +99,7 @@ class TwitterSearch extends Command
                 }
 
                 // Get tweets from the user's timeline
-                if($subscription->get_my_timeline && !$callToMyTimeline){
+                if(!$callToMyTimeline && $subscription->get_my_timeline){
                     $this->dispatch(new GetMyTimeline(
                         $subscription->conversation,
                         $subscription,
