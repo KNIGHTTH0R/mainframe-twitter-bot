@@ -24,6 +24,8 @@ class Users extends Migration
             $table->integer('twitter_home_timeline_limit')->default(0);
             $table->integer('twitter_user_timeline_limit')->default(0);
             $table->integer('twitter_search_limit')->default(0);
+            $table->integer('twitter_get_lists_limit')->default(0);
+            $table->integer('twitter_show_list_limit')->default(0);
             $table->integer('twitter_limits_limit')->default(0);
             $table->timestamps();
         });

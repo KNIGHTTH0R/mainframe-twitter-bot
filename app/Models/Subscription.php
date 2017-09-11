@@ -23,6 +23,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property boolean $get_my_mention
  * @property-read User $user
  * @property-read Conversation $conversation
+ * @property-read TwitterList $list
  */
 class Subscription extends Model
 {
@@ -41,6 +42,14 @@ class Subscription extends Model
     public function user()
     {
         return $this->belongsTo('App\Models\User');
+    }
+
+    /**
+     * @return BelongsTo
+     */
+    public function twitterList()
+    {
+        return $this->belongsTo('App\Models\TwitterList');
     }
 
 }

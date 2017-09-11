@@ -2,44 +2,31 @@
 
 namespace App\Models;
 
-use Illuminate\Auth\Authenticatable;
-use Laravel\Lumen\Auth\Authorizable;
-use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Contracts\Auth\Authenticatable as AuthenticatableContract;
-use Illuminate\Contracts\Auth\Access\Authorizable as AuthorizableContract;
-
 
 /**
- * Class User
+ * Class TwitterList
  * @package App\Models
  *
- * @property string $mainframe_user_id
- * @property string $twitter_oauth_token
- * @property string $twitter_oauth_token_secret
- * @property string $twitter_user_id
- * @property string $twitter_screen_name
- * @property integer $twitter_home_timeline_limit
- * @property integer $twitter_user_timeline_limit
- * @property integer $twitter_search_limit
- * @property integer $twitter_get_lists_limit
- * @property integer $twitter_show_list_limit
- * @property integer $twitter_limits_limit
+ * @property integer $id
+ * @property string $twitter_id
+ * @property string $twitter_slug
+ * @property string $twitter_name
+ * @property string $twitter_list_since_id
  * @property-read Collection|Subscription[] $subscriptions
+ * @property-read User $user
  */
-class User extends Model implements AuthenticatableContract, AuthorizableContract
+class TwitterList extends Model
 {
-    use Authenticatable, Authorizable;
-
     /**
      * The attributes that are mass assignable.
      *
      * @var array
      */
-    protected $fillable = [
-        'name', 'email', 'mainframe_user_id'
-    ];
+    protected $fillable = [];
 
     /**
      * The attributes excluded from the model's JSON form.
@@ -54,6 +41,14 @@ class User extends Model implements AuthenticatableContract, AuthorizableContrac
     public function subscriptions()
     {
         return $this->hasMany('App\Models\Subscription');
+    }
+
+    /**
+     * @return BelongsTo
+     */
+    public function user()
+    {
+        return $this->belongsTo('App\Models\User');
     }
 
     public function resetTwitterData(){
