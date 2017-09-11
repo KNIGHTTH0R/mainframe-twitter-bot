@@ -8,7 +8,7 @@
         "php": ">=5.6.4",
         "laravel/lumen-framework": "5.4.*",
         "vlucas/phpdotenv": "~2.2",
-        "aubruz/mainframe-bot-api": "~1.0.5",
+        "aubruz/mainframe-bot-api": "~1.0.7",
         "abraham/twitteroauth": "^0.7.4",
         "laravel/tinker": "^1.0",
         "predis/predis": "~1.0",

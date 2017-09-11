@@ -4,8 +4,8 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#composer-lock-the-lock-file",
         "This file is @generated automatically"
     ],
-    "hash": "3b9c88017ace6f757bd8aeccc73802c8",
-    "content-hash": "7fb75b77d1ea3a63b39c3c9dc974bcb4",
+    "hash": "7cb2b7a60c4af42ea681385b792a47a3",
+    "content-hash": "80dba99e858d713d872761125b466c4e",
     "packages": [
         {
             "name": "abraham/twitteroauth",
@@ -63,16 +63,16 @@
         },
         {
             "name": "aubruz/mainframe-bot-api",
-            "version": "v1.0.5",
+            "version": "v1.0.7",
             "source": {
                 "type": "git",
                 "url": "https://github.com/aubruz/mainframe-bot-api.git",
-                "reference": "f932cacc3c3fb52bf39708503f61af82ae30a922"
+                "reference": "5222c204de7a014f692c0e996ac3f5d050bcf8a4"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/aubruz/mainframe-bot-api/zipball/f932cacc3c3fb52bf39708503f61af82ae30a922",
-                "reference": "f932cacc3c3fb52bf39708503f61af82ae30a922",
+                "url": "https://api.github.com/repos/aubruz/mainframe-bot-api/zipball/5222c204de7a014f692c0e996ac3f5d050bcf8a4",
+                "reference": "5222c204de7a014f692c0e996ac3f5d050bcf8a4",
                 "shasum": ""
             },
             "require": {
@@ -102,7 +102,7 @@
                 "bot",
                 "mainframe"
             ],
-            "time": "2017-09-08 15:59:26"
+            "time": "2017-09-11 09:02:22"
         },
         {
             "name": "dnoegel/php-xdg-base-dir",
