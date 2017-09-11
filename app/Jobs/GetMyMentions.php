@@ -75,6 +75,7 @@ class GetMyMentions extends TwitterJob
             $tweetUI = new Tweet(
                 $tweet->id_str,
                 'url',
+                $tweet->created_at,
                 $tweet->user->name,
                 $tweet->user->screen_name,
                 htmlspecialchars_decode($tweet->full_text),

@@ -9,6 +9,8 @@ use Aubruz\Mainframe\UI\Components\MessageButton;
 use \Aubruz\Mainframe\UI\Components\Text;
 use Aubruz\Mainframe\Responses\UIPayload;
 use Aubruz\Mainframe\UI\Components\TextLink;
+use Aubruz\Mainframe\UI\Components\TextSubtle;
+use Carbon\Carbon;
 
 /**
  * Class Tweet
@@ -33,11 +35,13 @@ class Tweet
      * @param $avatar
      * @param $images
      */
-    public function __construct($tweetID, $tweetUrl, $userName, $screenName, $text, $avatar, $images = [])
+    public function __construct($tweetID, $tweetUrl, $tweetDate, $userName, $screenName, $text, $avatar, $images = [])
     {
+        $date = new Carbon($tweetDate);
+
         $message = new Message();
         $message->addChildren((new Author($userName, '@'.$screenName ))->addAvatarUrl($avatar)->isCircle());
-        $message->addChildren((new Text())->addChildren($text));
+        $message->addChildren($this->formatText($text, $date->formatLocalized('%A %d %B %Y %H:%M')));
 
         if($images){
             foreach($images as $image){
@@ -81,13 +85,13 @@ class Tweet
      * @return Text
      * @throws \Aubruz\Mainframe\Exceptions\UIException
      */
-    private function formatText($text)
+    private function formatText($text, $date)
     {
         $textObject = new Text();
 
         $textArray = explode(' ',$text);
         foreach($textArray as $text){
-            if($this->isHashtag($text)){
+            /*if($this->isHashtag($text)){
                 //dd($this->match);
                 $url = 'https://twitter.com/hashtag/'.$this->match[1];
                 $textObject->addChildren((new TextLink($url))->addChildren('#'.$this->match[1]));
@@ -100,7 +104,8 @@ class Tweet
                 if(count($this->match) > 2) {
                     $textObject->addChildren($this->match[2]);
                 }
-            }else if($this->isUrl($text)){
+            }else */
+            if($this->isUrl($text)){
                 $textObject->addChildren((new TextLink($this->match[1]))->addChildren($this->match[1]));
                 if(count($this->match) > 2) {
                     $textObject->addChildren($this->match[2]);
@@ -111,6 +116,7 @@ class Tweet
             $textObject->addChildren(' ');
             $this->match = null;
         }
+        $textObject->addChildren((new TextSubtle())->addChildren($date));
         return $textObject;
     }
 
