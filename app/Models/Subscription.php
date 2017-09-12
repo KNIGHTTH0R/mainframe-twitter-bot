@@ -21,8 +21,9 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property string $timeline_since_id
  * @property boolean $get_my_timeline
  * @property boolean $get_my_mention
- * @property boolean $get_people_retweets
- * @property boolean $get_people_replies
+ * @property boolean $get_search_retweets
+ * @property boolean $get_search_replies
+ * @property integer $twitter_list_id
  * @property-read User $user
  * @property-read Conversation $conversation
  * @property-read TwitterList $list

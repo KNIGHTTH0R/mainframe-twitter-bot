@@ -25,8 +25,8 @@ class Subscriptions extends Migration
             $table->string('timeline_since_id')->default('1');
             $table->boolean('get_my_timeline')->default(false);
             $table->boolean('get_my_mention')->default(false);
-            $table->boolean('get_people_retweets')->default(false);
-            $table->boolean('get_people_replies')->default(false);
+            $table->boolean('get_search_retweets')->default(false);
+            $table->boolean('get_search_replies')->default(false);
             $table->integer('conversation_id')->unsigned();
             $table->foreign('conversation_id')->references('id')->on('conversations')->onUpdate('cascade')->onDelete('cascade');
             $table->integer('user_id')->unsigned();

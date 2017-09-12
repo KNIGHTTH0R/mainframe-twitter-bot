@@ -281,12 +281,12 @@ class BotController extends ApiController
                 $search = $request->input('data.form.search', '');
                 $getMyMention = in_array('mention', $request->input('data.form.user_account', []));
                 $getMyTimeline = in_array('timeline', $request->input('data.form.user_account', []));
-                $getPeopleReplies = $request->input('data.form.get_people_replies', false);
-                $getPeopleRetweets = $request->input('data.form.get_people_retweets', false);
+                $getSearchReplies = $request->input('data.form.get_search_replies', false);
+                $getSearchRetweets = $request->input('data.form.get_search_retweets', false);
                 $listID = $request->input('data.form.lists', false);
 
                 //Verification of inputs
-                if($people === '' && $search === '' && !$getMyMention && !$getMyTimeline && !$listID) {
+                if($people === '' && $search === '' && !$getMyMention && !$getMyTimeline && (!$listID || $listID == "-1")) {
                     $this->botResponse->addMessage("You must choose at least one element of subscription");
                     $this->botResponse->setSuccess(false);
                     return $this->respond($this->botResponse->toArray());
@@ -330,10 +330,10 @@ class BotController extends ApiController
                     $subscription->mainframe_subscription_id = $response->subscription_id;
                     $subscription->get_my_mention = $getMyMention;
                     $subscription->get_my_timeline = $getMyTimeline;
-                    $subscription->get_people_retweets = $getPeopleRetweets;
-                    $subscription->get_people_replies = $getPeopleReplies;
+                    $subscription->get_search_retweets = $getSearchRetweets;
+                    $subscription->get_search_replies = $getSearchReplies;
                     $subscription->twitter_list_id = null;
-                    if($listID) {
+                    if($listID && $listID != '-1') {
                         $subscription->twitter_list_id = $listID;
                     }
 
@@ -454,17 +454,18 @@ class BotController extends ApiController
             foreach ($user->twitterLists as $list) {
                 $twitterListDropdown->addOptions([$list->id => $list->twitter_name]);
             }
+            $twitterListDropdown->addOptions(["-1" => "None"]);
         }else{
-            $twitterListDropdown->setPlaceholder("You have no list");
+            $twitterListDropdown->disable();
         }
 
         $form = (new Form())
             ->addChildren((new TextInput("search", "Search: #hashtag, word, @username"))->setPrefix("Search"))
-            ->addChildren((new TextInput("people", "People that you want to follow."))->setPrefix("@"))
             ->addChildren((new CheckboxGroup(" "))
-                ->addChildren(new CheckboxItem("get_people_retweets", "Include retweets"))
-                ->addChildren(new CheckboxItem("get_people_replies", "Include replies"))
+                ->addChildren(new CheckboxItem("get_search_retweets", "Include retweets"))
+                ->addChildren(new CheckboxItem("get_search_replies", "Include replies"))
             )
+            ->addChildren((new TextInput("people", "People that you want to follow."))->setPrefix("@"))
             ->addChildren($twitterListDropdown)
             ->addChildren((new MultiSelect('user_account', 'My account'))
                 ->addOptions(["timeline" => "Get your timeline"])
@@ -489,11 +490,11 @@ class BotController extends ApiController
             if($subscription->get_my_mention){
                 array_push($userAccount, "mention");
             }
-            if($subscription->get_people_retweets != '') {
-                $form->addData("get_people_retweets", $subscription->get_people_retweets);
+            if($subscription->get_search_retweets != '') {
+                $form->addData("get_search_retweets", $subscription->get_search_retweets);
             }
-            if($subscription->get_people_replies != '') {
-                $form->addData("get_people_replies", $subscription->get_people_replies);
+            if($subscription->get_search_replies != '') {
+                $form->addData("get_search_replies", $subscription->get_search_replies);
             }
             if($subscription->twitter_list_id != null) {
                 $form->addData("lists", $subscription->twitter_list_id);
