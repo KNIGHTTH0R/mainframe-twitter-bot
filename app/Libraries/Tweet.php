@@ -35,7 +35,7 @@ class Tweet
      * @param $avatar
      * @param $images
      */
-    public function __construct($tweetID, $tweetUrl, $tweetDate, $userName, $screenName, $text, $avatar, $images = [])
+    public function __construct($tweetID, $tweetDate, $userName, $screenName, $text, $avatar, $images = [])
     {
         $date = new Carbon($tweetDate);
 
@@ -63,7 +63,7 @@ class Tweet
         $retweetButton =(new MessageButton("Retweet"))->setType("open_modal")->setPayload([
             "type"      => "get_retweet_form",
             "tweet_id"  => $tweetID,
-            "tweet_url" => $tweetUrl
+            "tweet_url" => $this->getTweetUrl($screenName, $tweetID)
         ]);
 
         $this->uiPayload = new UIPayload();
@@ -118,6 +118,11 @@ class Tweet
         }
         $textObject->addChildren((new TextSubtle())->addChildren($date));
         return $textObject;
+    }
+
+    private function getTweetUrl($screenName, $tweetID)
+    {
+        return 'https://twitter.com/' . $screenName . '/status/' . $tweetID;
     }
 
     /**

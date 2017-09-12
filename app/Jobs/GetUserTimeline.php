@@ -76,7 +76,6 @@ class GetUserTimeline extends TwitterJob
                 }
                 $tweetUI = new Tweet(
                     $tweet->id_str,
-                    'url',
                     $tweet->created_at,
                     $tweet->user->name,
                     $tweet->user->screen_name,
