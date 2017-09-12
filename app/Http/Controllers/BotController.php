@@ -274,6 +274,36 @@ class BotController extends ApiController
                     $this->botResponse->addMessage("Lists updated successfully!");
                 }
                 break;
+            case 'new_tweet':
+                $form = new Form();
+                $form->addChildren((new MultiLineInput('tweet_text','Tweet message (max: 140 chars.)')));
+                $this->botResponse->addData((new ModalData('Send new tweet'))
+                    ->setUI((new UIPayload())
+                        ->addButton((new ModalButton("Send tweet"))->setPayload(["type"=>"send_new_tweet"])->setType("form_post")->setStyle("primary"))
+                        ->addButton((new ModalButton("Cancel"))->setStyle("secondary")->setType("close_modal"))
+                        ->setRender($form)
+                    )
+                );
+                return $this->botResponse->toArray();
+            case 'send_new_tweet':
+                if($request->has('data.form.tweet_text') && $request->input('data.form.tweet_text') != ''){
+                    if(strlen($request->input('data.form.tweet_text')) > 140){
+                        $this->botResponse->addMessage("The text cannot exceed 140 characters!");
+                        $this->botResponse->setSuccess(false);
+                    }else {
+                        $this->twitterConnection->post("statuses/update", [
+                            "status" => $request->input('data.form.tweet_text')
+                        ]);
+                        if ($this->twitterConnection->getLastHttpCode() != 200){
+                            $this->botResponse->addMessage("An error occured, please try again later.");
+                            $this->botResponse->setSuccess(false);
+                        }
+                    }
+                }else{
+                    $this->botResponse->addMessage("The text cannot be empty!");
+                    $this->botResponse->setSuccess(false);
+                }
+                return $this->botResponse->toArray();
             case 'save':
 
                 // Get inputs
