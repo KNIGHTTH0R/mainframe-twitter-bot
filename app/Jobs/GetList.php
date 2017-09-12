@@ -51,9 +51,10 @@ class GetList extends TwitterJob
             $this->user->twitter_show_list_limit = $this->user->twitter_show_list_limit -1;
             $this->user->save();
 
-            $tweets = $this->twitterConnection->get("lists/show", [
+            $tweets = $this->twitterConnection->get("lists/statuses", [
                 "list_id" => $list->twitter_id,
                 "tweet_mode" => "extended",
+                "count" => 10,
                 "since_id" => $list->twitter_list_since_id
             ]);
 
@@ -63,7 +64,7 @@ class GetList extends TwitterJob
             }
 
             $firstTweet = true;
-            foreach ($tweets->statuses as $tweet) {
+            foreach ($tweets as $tweet) {
 
                 $images = [];
                 if (property_exists($tweet, "entities") && property_exists($tweet->entities, "media")) {
@@ -87,8 +88,8 @@ class GetList extends TwitterJob
                 );
 
                 if ($firstTweet) {
-                    $this->subscription->hashtags_since_id = $tweet->id_str;
-                    $this->subscription->save();
+                    $list->twitter_list_since_id = $tweet->id_str;
+                    $list->save();
                 }
 
                 foreach ($subscriptions as $subscription) {
@@ -96,7 +97,6 @@ class GetList extends TwitterJob
                 }
 
                 $firstTweet = false;
-
             }
         }
 

@@ -286,7 +286,7 @@ class BotController extends ApiController
                 $listID = $request->input('data.form.lists', false);
 
                 //Verification of inputs
-                if($people === '' && $search === '' && !$getMyMention && !$getMyTimeline && !$list) {
+                if($people === '' && $search === '' && !$getMyMention && !$getMyTimeline && !$listID) {
                     $this->botResponse->addMessage("You must choose at least one element of subscription");
                     $this->botResponse->setSuccess(false);
                     return $this->respond($this->botResponse->toArray());
@@ -495,8 +495,8 @@ class BotController extends ApiController
             if($subscription->get_people_replies != '') {
                 $form->addData("get_people_replies", $subscription->get_people_replies);
             }
-            if($subscription->list_id != null) {
-                $form->addData("lists", $subscription->list_id);
+            if($subscription->twitter_list_id != null) {
+                $form->addData("lists", $subscription->twitter_list_id);
             }
 
             if(count($userAccount) > 0) {
