@@ -15,7 +15,9 @@ use Illuminate\Contracts\Auth\Access\Authorizable as AuthorizableContract;
  * Class User
  * @package App\Models
  *
+ * @property integer $id
  * @property string $mainframe_user_id
+ * @property string $twitter_oauth_request_token
  * @property string $twitter_oauth_token
  * @property string $twitter_oauth_token_secret
  * @property string $twitter_user_id

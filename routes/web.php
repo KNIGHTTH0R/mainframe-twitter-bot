@@ -11,8 +11,6 @@
 |
 */
 
-$app->get('/', 'BotController@index');
-
 // BOT ENDPOINTS FOR MAINFRAME API
 $app->post('/conversation_added', 'BotController@conversationAdded');
 $app->post('/conversation_removed', 'BotController@conversationRemoved');

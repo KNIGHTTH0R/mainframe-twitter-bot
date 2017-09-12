@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * Class Subscription
  * @package App\Models
  *
+ * @property integer $twitter_list_id
  * @property string $conversation_id
  * @property string $user_id
  * @property string $mainframe_subscription_id
@@ -23,7 +24,6 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property boolean $get_my_mention
  * @property boolean $get_search_retweets
  * @property boolean $get_search_replies
- * @property integer $twitter_list_id
  * @property-read User $user
  * @property-read Conversation $conversation
  * @property-read TwitterList $list
