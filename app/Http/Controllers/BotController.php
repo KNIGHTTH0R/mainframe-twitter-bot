@@ -448,21 +448,27 @@ class BotController extends ApiController
                 if($request->has('data.tweet_id') && $request->has('data.tweet_url')) {
 
                     if($request->has('data.form.retweet_text') && $request->input('data.form.retweet_text') != ''){
-                        if(strlen($request->input('data.form.retweet_text')) > 140){
+                        if(strlen($request->input('data.form.retweet_text')) > 117){
                             $this->botResponse->setSuccess(false);
-                            $this->botResponse->addMessage("Your tweet exceeds 140 characters!");
+                            $this->botResponse->addMessage("Due to a restriction from tweeter, a tweet cannot exceed 117 characters in a retweet comment!");
+                            return $this->respond($this->botResponse->toArray());
                         }else {
                             //Retweet with quote
-                            /*$this->twitterConnection->post("statuses/update", [
-                                "in_reply_to_status_id" => $request->input('data.tweet_id'),
-                                "status" => $request->input('data.form.retweet_text')
-                            ]);*/
+                            $text = $request->input('data.form.retweet_text') . ' ' . $request->input('data.tweet_url');
+                            $resp= $this->twitterConnection->post("statuses/update", [
+                                "status" => $text
+                            ]);
                         }
                     }else{
                         //Simple retweet
-                        $this->twitterConnection->post("statuses/retweet/".$request->has('data.tweet_id'), [
+                        $this->twitterConnection->post("statuses/retweet", [
                             "id" => $request->input('data.tweet_id')
                         ]);
+
+                    }
+                    if ($this->twitterConnection->getLastHttpCode() != 200){
+                        $this->botResponse->addMessage("An error occured, please try again later.");
+                        $this->botResponse->setSuccess(false);
                     }
                 }else{
                     $this->botResponse->setSuccess(false);
@@ -478,7 +484,7 @@ class BotController extends ApiController
                 break;
         }
 
-        $twitterListDropdown = new Dropdown('lists', 'Lists');
+        $twitterListDropdown = new Dropdown('lists', 'My lists');
         if(count($user->twitterLists) > 0) {
             $twitterListDropdown->setPlaceholder("Select a list");
             foreach ($user->twitterLists as $list) {
