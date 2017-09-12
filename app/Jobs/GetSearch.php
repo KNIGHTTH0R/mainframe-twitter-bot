@@ -43,9 +43,18 @@ class GetSearch extends TwitterJob
                                             $this->user->twitter_oauth_token_secret
                                         );
 
-        $hashtags = str_replace(',', ' OR ', $this->subscription->search);
+        $q = str_replace(',', ' OR ', $this->subscription->search);
+        if(!$this->subscription->get_search_retweets){
+            $q .= ' -filter:retweets';
+        }
+        if(!$this->subscription->get_search_replies){
+            if(!$this->subscription->get_search_retweets){
+                $q .= ' AND';
+            }
+            $q .= ' -filter:replies';
+        }
         $tweets = $this->twitterConnection->get("search/tweets", [
-            "q"             => $hashtags . " -filter:retweets AND -filter:replies",
+            "q"             => $q,
             "result_type"   => "recent",
             "count"         => 10,
             "tweet_mode"    => "extended",
