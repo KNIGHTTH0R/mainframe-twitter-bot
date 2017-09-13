@@ -20,6 +20,7 @@ use Aubruz\Mainframe\UI\Components\MultiSelect;
 use Aubruz\Mainframe\UI\Components\RadioButtonSelect;
 use Aubruz\Mainframe\UI\Components\TextInput;
 use Aubruz\Mainframe\UI\Components\Form;
+use bar\baz\source_with_namespace;
 use Illuminate\Http\Request;
 use Abraham\TwitterOAuth\TwitterOAuth;
 
@@ -46,13 +47,25 @@ class BotController extends ApiController
     private $botResponse;
 
     /**
+     * @var string
+     */
+    private $mainframeSubscriptionID;
+
+    /**
+     * @var string
+     */
+    private $mainframeUserID;
+
+    /**
      * BotController constructor.
      */
     public function __construct()
     {
-        $this->mainframeClient      = new MainframeClient(env('BOT_SECRET'), env('MAINFRAME_API_URL'));
-        $this->twitterConnection    = new TwitterOAuth(env("TWITTER_API_KEY"), env("TWITTER_API_SECRET"));
-        $this->botResponse          = new BotResponse();
+        $this->mainframeClient          = new MainframeClient(env('BOT_SECRET'), env('MAINFRAME_API_URL'));
+        $this->twitterConnection        = new TwitterOAuth(env("TWITTER_API_KEY"), env("TWITTER_API_SECRET"));
+        $this->botResponse              = new BotResponse();
+        $this->mainframeSubscriptionID  = null;
+        $this->mainframeSubscriptionID  = null;
     }
 
     /**
@@ -177,79 +190,32 @@ class BotController extends ApiController
         }
 
         // Get context
-        $mainframeUserID = $request->input('context.user_id');
-        $requestType = $request->input('data.type');
-        $subscriptionExists = $request->has('context.subscription_id');
-        $mainframeSubscriptionID = $request->input('context.subscription_id');
+        $this->mainframeUserID = $request->input('context.user_id');
+        $this->mainframeSubscriptionID = $request->input('context.subscription_id');
 
         // Retrieve user
-        $user = (new User)->where('mainframe_user_id', $mainframeUserID)->first();
+        $user = (new User)->where('mainframe_user_id', $this->mainframeUserID)->first();
         if(!$user){
             $user = new User();
-            $user->mainframe_user_id = $mainframeUserID;
+            $user->mainframe_user_id = $this->mainframeUserID;
             $user->save();
         }
 
         // user not authenticated
-        if(!$user->twitter_oauth_token && $request->input('data.payload.type') != 'authentication_success'){
-            $url = $this->getTwitterAuthUrl($user);
-            $this->botResponse->addData((new AuthenticationData($url))->addPayload(["type"=>"authentication_success"]));
-            return $this->respond($this->botResponse->toArray());
+        if(!$user->twitter_oauth_token){
+            return $this->authenticationForm($user);
         }
 
         // To make twitter api calls in the behalf of the user
         $this->twitterConnection->setOauthToken($user->twitter_oauth_token, $user->twitter_oauth_token_secret);
 
-        switch($requestType){
+        switch($request->input('data.type')){
             case 'authentication_success':
-                // Get twitter lists of user
-                $lists = $this->twitterConnection->get("lists/list");
+                return $this->authenticationSuccess($user);
 
-                if ($this->twitterConnection->getLastHttpCode() != 200) {
-                    return $this->respondWithError("A problem occured. Please retry or signout and signin again.");
-                }
-
-                foreach ($lists as $list) {
-                    $twitterList = new TwitterList();
-                    $twitterList->twitter_id = $list->id_str;
-                    $twitterList->twitter_name = $list->name;
-                    $twitterList->twitter_slug = $list->slug;
-                    $twitterList->user_id = $user->id;
-                    $twitterList->save();
-                }
-
-                break;
             case 'update_user_lists':
-                if($user->twitter_get_lists_limit > 1) {
-                    $lists = $this->twitterConnection->get("lists/list");
-                    if ($this->twitterConnection->getLastHttpCode() != 200) {
-                        return $this->respondWithError("A problem occured. Please retry or signout and signin again.");
-                    }
-                    $listsInDB = (new Twitterlist)->pluck('twitter_id')->all();
+                return $this->updateUserLists($user);
 
-                    //Synchronize lists
-                    foreach ($lists as $list) {
-                        if(!in_array($list->id_str , $listsInDB)){
-                            //Add the missing lists
-                            $twitterList = new TwitterList();
-                            $twitterList->twitter_id = $list->id_str;
-                            $twitterList->twitter_name = $list->name;
-                            $twitterList->twitter_slug = $list->slug;
-                            $twitterList->user_id = $user->id;
-                            $twitterList->save();
-                        }else{
-                            $key = array_search($list->id_str, $listsInDB);
-                            if($key !== false) {
-                                unset($listsInDB[$key]);
-                            }
-                        }
-                    }
-                    // Delete the lists that doesn't exist anymore
-                    (new TwitterList)->whereIn('twitter_id', $listsInDB)->delete();
-
-                    $this->botResponse->addMessage("Lists updated successfully!");
-                }
-                break;
             case 'get_new_tweet_form':
                 return $this->getNewTweetForm();
 
@@ -279,17 +245,37 @@ class BotController extends ApiController
 
             case 'like':
                 return $this->like($request);
+
+            case 'edit':
+                return $this->returnForm($user);
         }
 
-        $twitterListDropdown = new Dropdown('lists', 'My lists');
+        return $this->respondWithError();
+    }
+
+    private function authenticationForm(User $user)
+    {
+        $url = $this->getTwitterAuthUrl($user);
+        $this->botResponse->addData((new AuthenticationData($url))->addPayload(["type"=>"authentication_success"]));
+        return $this->respond($this->botResponse->toArray());
+    }
+
+    /**
+     * @param User $user
+     * @param bool $mainframeSubscriptionID
+     * @throws \Aubruz\Mainframe\Exceptions\UIException
+     */
+    private function returnForm(User $user)
+    {
+        $twitterLists = new Dropdown('lists', 'My lists');
         if(count($user->twitterLists) > 0) {
-            $twitterListDropdown->setPlaceholder("Select a list");
+            $twitterLists->setPlaceholder("Select a list");
             foreach ($user->twitterLists as $list) {
-                $twitterListDropdown->addOptions([$list->id => $list->twitter_name]);
+                $twitterLists->addOptions([$list->id => $list->twitter_name]);
             }
-            $twitterListDropdown->addOptions(["-1" => "None"]);
+            $twitterLists->addOptions(["-1" => "None"]);
         }else{
-            $twitterListDropdown->disable();
+            $twitterLists->disable();
         }
 
         $form = (new Form())
@@ -299,15 +285,38 @@ class BotController extends ApiController
                 ->addChildren(new CheckboxItem("get_search_replies", "Include replies"))
             )
             ->addChildren((new TextInput("people", "People that you want to follow."))->setPrefix("@"))
-            ->addChildren($twitterListDropdown)
+            ->addChildren($twitterLists)
             ->addChildren((new MultiSelect('user_account', 'My account'))
                 ->addOptions(["timeline" => "Get your timeline"])
                 ->addOptions(["mention" => "Get the tweets that mention your name"]));
 
-        if(($requestType === 'edit' || $requestType === 'signout') && $subscriptionExists) {
-            $subscription = (new Subscription)->where('mainframe_subscription_id', $mainframeSubscriptionID)->first();
+        $form = $this->fillFormValues($form);
+        if($form === false) {
+            return $this->respondWithError("An error occured, please restart the process from the beginning.");
+        }
+
+        $this->botResponse->addData((new ModalData('Choose you subscription'))
+            ->setUI((new UIPayload())
+                ->addButton((new ModalButton("Save"))->setPayload(["type"=>"save"])->setType("form_post")->setStyle("primary"))
+                ->addButton((new ModalButton("Signout"))->setPayload(["type"=>"get_signout_form"])->setStyle("secondary")->setType("post_payload"))
+                ->addButton((new ModalButton("Reload lists"))->setPayload(["type"=>"update_user_lists"])->setStyle("secondary")->setType("post_payload"))
+                ->setRender($form)
+            )
+        );
+        return $this->respond($this->botResponse->toArray());
+    }
+
+    /**
+     * @param Form $form
+     * @param bool $mainframeSubscriptionID
+     * @return Form|bool
+     */
+    private function fillFormValues(Form $form)
+    {
+        if($this->mainframeSubscriptionID) {
+            $subscription = (new Subscription)->where('mainframe_subscription_id', $this->mainframeSubscriptionID)->first();
             if(!$subscription){
-                return $this->respondWithError("An error occured, please restart the process from the beginning.");
+                return false;
             }
             // Fill form with database data
             if($subscription->search != '') {
@@ -334,24 +343,78 @@ class BotController extends ApiController
             }
 
             if(count($userAccount) > 0) {
-               $form->addData("user_account", $userAccount);
+                $form->addData("user_account", $userAccount);
             }
         }else {
             $form->addData("search", "#mainframe,landscape")
                 ->addData("people", "@MainframeApp");
         }
+        return $form;
+    }
 
+    /**
+     * @param User $user
+     * @return \Illuminate\Http\JsonResponse
+     * @throws \Exception
+     */
+    private function updateUserLists(User $user)
+    {
+        if($user->twitter_get_lists_limit > 1) {
+            $lists = $this->twitterConnection->get("lists/list");
+            if ($this->twitterConnection->getLastHttpCode() != 200) {
+                return $this->respondWithError("A problem occured. Please retry or signout and signin again.");
+            }
+            $listsInDB = (new Twitterlist)->pluck('twitter_id')->all();
 
-        $this->botResponse->addData((new ModalData('Choose you subscription'))
-            ->setUI((new UIPayload())
-                ->addButton((new ModalButton("Save"))->setPayload(["type"=>"save"])->setType("form_post")->setStyle("primary"))
-                ->addButton((new ModalButton("Signout"))->setPayload(["type"=>"get_signout_form"])->setStyle("secondary")->setType("post_payload"))
-                ->addButton((new ModalButton("Reload lists"))->setPayload(["type"=>"update_user_lists"])->setStyle("secondary")->setType("post_payload"))
-                ->setRender($form)
-            )
-        );
+            //Synchronize lists
+            foreach ($lists as $list) {
+                if(!in_array($list->id_str , $listsInDB)){
+                    //Add the missing lists
+                    $twitterList = new TwitterList();
+                    $twitterList->twitter_id = $list->id_str;
+                    $twitterList->twitter_name = $list->name;
+                    $twitterList->twitter_slug = $list->slug;
+                    $twitterList->user_id = $user->id;
+                    $twitterList->save();
+                }else{
+                    $key = array_search($list->id_str, $listsInDB);
+                    if($key !== false) {
+                        unset($listsInDB[$key]);
+                    }
+                }
+            }
+            // Delete the lists that doesn't exist anymore
+            (new TwitterList)->whereIn('twitter_id', $listsInDB)->delete();
 
-        return $this->respond($this->botResponse->toArray());
+            $this->botResponse->addMessage("Lists updated successfully!");
+        }else{
+            return $this->respondWithError("The list cannot be updated now, please retry later.");
+        }
+        return $this->returnForm($user);
+    }
+
+    /**
+     * @param User $user
+     * @return \Illuminate\Http\JsonResponse
+     */
+    private function authenticationSuccess(User $user)
+    {
+        // Get twitter lists of user
+        $lists = $this->twitterConnection->get("lists/list");
+
+        if ($this->twitterConnection->getLastHttpCode() != 200) {
+            return $this->respondWithError("A problem occured. Please retry or signout and signin again.");
+        }
+
+        foreach ($lists as $list) {
+            $twitterList = new TwitterList();
+            $twitterList->twitter_id = $list->id_str;
+            $twitterList->twitter_name = $list->name;
+            $twitterList->twitter_slug = $list->slug;
+            $twitterList->user_id = $user->id;
+            $twitterList->save();
+        }
+        return $this->returnForm($user);
     }
 
     /**
@@ -440,8 +503,8 @@ class BotController extends ApiController
 
         $this->botResponse->addData((new ModalData('Are you sure?'))
             ->setUI((new UIPayload())
-                ->addButton((new ModalButton("OK"))->setPayload(["type"=>"signout_with_confirmation"])->setType("form_post")->setStyle("primary"))
-                ->addButton((new ModalButton("Cancel"))->setStyle("close_modal")->setType("post_payload"))
+                ->addButton((new ModalButton("OK"))->setPayload(["type"=>"signout"])->setType("form_post")->setStyle("primary"))
+                ->addButton((new ModalButton("Cancel"))->setStyle("secondary")->setPayload(["type"=>"edit"])->setType("post_payload"))
                 ->setRender($form)
             )
         );
@@ -467,7 +530,7 @@ class BotController extends ApiController
             return $this->respond($this->botResponse->toArray());
         }
 
-        return $this->respondWithError();
+        return $this->returnForm($user);
     }
 
     /**
