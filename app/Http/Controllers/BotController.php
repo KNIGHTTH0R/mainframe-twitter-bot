@@ -431,9 +431,8 @@ class BotController extends ApiController
         $getSearchReplies = $request->input('data.form.get_search_replies', false);
         $getSearchRetweets = $request->input('data.form.get_search_retweets', false);
         $listID = $request->input('data.form.lists', false);
-        $subscriptionToken = $request->input('context.subscription_token', false);
+        $subscriptionToken = $request->input('context.subscription_token');
         $mainframeConversationID = $request->input('context.conversation_id');
-        $mainframeSubscriptionID = $request->input('context.subscription_id');
 
         //Verification of inputs
         if($people === '' && $search === '' && !$getMyMention && !$getMyTimeline && (!$listID || $listID == "-1")) {
@@ -452,7 +451,7 @@ class BotController extends ApiController
         }
 
         // Edit or setup subscription with Mainframe
-        if($mainframeSubscriptionID){
+        if($this->mainframeSubscriptionID){
             $response = $this->mainframeClient->editSubscription($subscriptionToken, $label);
         }else {
             $response = $this->mainframeClient->setupSubscription($subscriptionToken, $label);
@@ -462,12 +461,12 @@ class BotController extends ApiController
         if($response->success){
             //Create new subscription or edit
             $conversation = (new Conversation)->where('mainframe_conversation_id', $mainframeConversationID)->first();
-            if(!$mainframeSubscriptionID){
+            if(!$this->mainframeSubscriptionID ){
                 $subscription = new Subscription();
                 $subscription->conversation_id = $conversation->id;
                 $subscription->user_id = $user->id;
             }else {
-                $subscription = (new Subscription)->where('mainframe_subscription_id', $mainframeSubscriptionID)->first();
+                $subscription = (new Subscription)->where('mainframe_subscription_id', $this->mainframeSubscriptionID )->first();
             }
 
             $subscription->label = $label;
