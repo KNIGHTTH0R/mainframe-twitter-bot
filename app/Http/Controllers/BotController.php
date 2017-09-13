@@ -20,7 +20,6 @@ use Aubruz\Mainframe\UI\Components\MultiSelect;
 use Aubruz\Mainframe\UI\Components\RadioButtonSelect;
 use Aubruz\Mainframe\UI\Components\TextInput;
 use Aubruz\Mainframe\UI\Components\Form;
-use bar\baz\source_with_namespace;
 use Illuminate\Http\Request;
 use Abraham\TwitterOAuth\TwitterOAuth;
 
@@ -65,7 +64,7 @@ class BotController extends ApiController
         $this->twitterConnection        = new TwitterOAuth(env("TWITTER_API_KEY"), env("TWITTER_API_SECRET"));
         $this->botResponse              = new BotResponse();
         $this->mainframeSubscriptionID  = null;
-        $this->mainframeSubscriptionID  = null;
+        $this->mainframeUserID  = null;
     }
 
     /**
@@ -432,7 +431,7 @@ class BotController extends ApiController
         $getSearchReplies = $request->input('data.form.get_search_replies', false);
         $getSearchRetweets = $request->input('data.form.get_search_retweets', false);
         $listID = $request->input('data.form.lists', false);
-        $subscriptionToken = $request->input('context.subscription_token');
+        $subscriptionToken = $request->input('context.subscription_token', false);
         $mainframeConversationID = $request->input('context.conversation_id');
         $mainframeSubscriptionID = $request->input('context.subscription_id');
 
@@ -453,7 +452,7 @@ class BotController extends ApiController
         }
 
         // Edit or setup subscription with Mainframe
-        if($subscriptionToken){
+        if($mainframeSubscriptionID){
             $response = $this->mainframeClient->editSubscription($subscriptionToken, $label);
         }else {
             $response = $this->mainframeClient->setupSubscription($subscriptionToken, $label);
@@ -463,7 +462,7 @@ class BotController extends ApiController
         if($response->success){
             //Create new subscription or edit
             $conversation = (new Conversation)->where('mainframe_conversation_id', $mainframeConversationID)->first();
-            if(!$subscriptionToken){
+            if(!$mainframeSubscriptionID){
                 $subscription = new Subscription();
                 $subscription->conversation_id = $conversation->id;
                 $subscription->user_id = $user->id;

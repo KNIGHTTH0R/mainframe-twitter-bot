@@ -5,6 +5,7 @@ Twitter bot for the Mainframe platform
 
 ### Bot config
 **Create subscription payload:** `{"type":"edit"}`
+
 **Edit subscription payload:** `{"type":"edit"}`
 
 ### Quick menu item
