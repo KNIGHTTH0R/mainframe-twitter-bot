@@ -51,18 +51,4 @@ class TwitterList extends Model
     {
         return $this->belongsTo('App\Models\User');
     }
-
-    public function resetTwitterData(){
-        $this->twitter_oauth_token = null;
-        $this->twitter_oauth_token_secret = null;
-        $this->twitter_screen_name = null;
-        $this->twitter_user_id = null;
-        $this->twitter_home_timeline_limit = 0;
-        $this->twitter_user_timeline_limit = 0;
-        $this->twitter_search_limit = 0;
-        $this->twitter_get_lists_limit = 0;
-        $this->twitter_show_list_limit = 0;
-        $this->twitter_limits_limit = 0;
-    }
-
 }
