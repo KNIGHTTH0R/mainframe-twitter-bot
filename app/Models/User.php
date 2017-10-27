@@ -68,6 +68,7 @@ class User extends Model implements AuthenticatableContract, AuthorizableContrac
     }
 
     public function resetTwitterData(){
+        $this->twitterLists()->delete();
         $this->twitter_oauth_token = null;
         $this->twitter_oauth_token_secret = null;
         $this->twitter_screen_name = null;
